@@ -25,7 +25,6 @@
         header {
             width: 90%;
             margin: 10px auto;
-            background: limegreen;
         }
         
         h1 {
@@ -170,8 +169,10 @@
                     fillColor: getColor(layer.feature.properties[attribute] / layer.feature.properties[norm], breaks)
                     })
                 });
-                layer.bindPopup('<b>' + layer.feature.properties.NAME + ' County </b><br>' + attribute + ': ' + layer.feature.properties[attribute]);
-                console.log(layer);
+                
+                var rate = (layer.feature.properties[attribute] / layer.feature.properties[norm])*100;
+                rate = rate.toFixed(2);
+                layer.bindPopup('<b>' + layer.feature.properties.NAME + ' County </b><br>' + attribute + ': ' + rate + '%');
             });
 
             drawLegend(breaks);
