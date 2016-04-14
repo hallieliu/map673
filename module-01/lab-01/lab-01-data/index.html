@@ -122,10 +122,12 @@
         map.addControl( L.control.zoom({ position: 'topright' }));
 
         var dataLayer,
-            attribute = "OWNED_MORT",
-            norm = "OWNER";
+            // attribute = "OWNED_MORT",
+            attribute = "OWNED_FREE",
+            // norm = "OWNER";
+            norm = "OCCUPIED";
 
-        $.getJSON("ky_counties_housing.json", function (data) { // this is an anonymous function...? why can we just say 'data'?
+        $.getJSON("ky_counties_housing.json", function (data) { // this is an anonymous function...? why can we just say 'data'? what's the point of anon functions again?
             dataLayer = L.geoJson(data, {
                 style: function (feature) {
                     return {
@@ -141,6 +143,14 @@
             drawMap(dataLayer);
         });
 
+        var hoverColor = '#04A777';
+        
+        // event listeners: color change on hover
+        
+        // event listeners: popup on click
+        
+        
+        
 
         // our own functions (not jQuery or Leaflet methods)
         function drawMap(dataLayer) {
@@ -149,7 +159,19 @@
             dataLayer.eachLayer(function (layer) {
                 layer.setStyle({
                     fillColor: getColor(layer.feature.properties[attribute] / layer.feature.properties[norm], breaks)
+                    });
+                layer.on('mouseover', function (){
+                    layer.setStyle({
+                        fillColor: hoverColor
+                    })
+                    });
+                layer.on('mouseout', function () {
+                    layer.setStyle({
+                    fillColor: getColor(layer.feature.properties[attribute] / layer.feature.properties[norm], breaks)
+                    })
                 });
+                layer.bindPopup('<b>' + layer.feature.properties.NAME + ' County </b><br>' + attribute + ': ' + layer.feature.properties[attribute]);
+                console.log(layer);
             });
 
             drawLegend(breaks);
