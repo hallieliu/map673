@@ -20,6 +20,7 @@
             background: whitesmoke;
             font-family: Lato, sans-serif;
             color: #0D0000;
+            background: #003049;
         }
         
         header {
@@ -30,32 +31,37 @@
         h1 {
             display: inline-block;
             margin-right: 20px;
-            color: #001323;
+            color: #ffffff;
         }
         
         h2 {
             display: inline-block;
-            color: #001323;
+            color: #ffffff;
         }
         
         #map {
             width: 90%;
             height: 540px;
             margin: 10px auto;
-            background: whitesmoke;
+            background: #218380;
             border: 2px solid #dddedf;
-            background: aquamarine;
+            padding: 2px 10px;
         }
         
         footer {
             width: 90%;
             margin: 10px auto;
-            background: lightcoral;
+            background: #254e70;
+            padding: 2px 10px;
         }
         
         p {
             font-size: 1em;
-            color: #001323;
+            color: whitesmoke;
+        }
+        
+        a {
+            color: #04a777;
         }
         
         .legend {
@@ -102,14 +108,15 @@
     <div id='map'></div>
 
     <footer>
-        <p>Map authored by YOUR NAME</p>
-        <p>Additional information about the data and map goes here.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis urna magna, maximus nec laoreet sit amet, dictum ultricies nibh. Ut id auctor lacus. Nam a dolor et justo luctus luctus. Duis a elit eget risus dictum vehicula id eu elit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed sed enim nisl. Vestibulum commodo imperdiet lacus, sed facilisis erat placerat sit amet. Nulla consequat malesuada neque eget aliquet. Integer non convallis nisl, gravida ultrices ex. Fusce nec vestibulum elit. Sed elementum lectus ipsum, vulputate elementum ex laoreet a. Aenean eu ex varius, varius felis vitae, efficitur nulla. Quisque pretium laoreet ante, in sodales dui vehicula at. Mauris eu sem sapien.
+        <p>Map authored by Hallie Liu, April 2016</p>
+        <p>Data for this  map was obtained using <a href = http://factfinder.census.gov/> American Fact Finder</a> and is from the 2010 US Census.</p>
+        <p>This map visualizes the average percentage of owner-occupied properties in each county of Kentucky, for owners who have fully paid off their property. Only owners who live on a property of theirs that is "free and clear" are represented in the percentage; all occupied properties are included in the total. Cartographic symbology can be used to lend assumed value to data represented on a map, or to emphasize certain trends in the data. For instance, on this map it might be easy for a reader to assume that counties in the southeastern part of the state are "better" because they have a higher percentage of fully paid owner-occupied properties and are therefore wealthier, and are represented by higher saturation. The less-saturated counties might be interpreted as less desirable or less-important (or lower income), although these ideas are not represented within the data being shown on the map. This map could be construed as a representation of wealth by county in Kentucky, but that would not be a correct interpretation. What it does begin to indicate are areas of Kentucky where property owners are more rooted or loyal to the land, though a reason for that is not provided. 
         </p>
     </footer>
 
     <script>
         $("h1").html("Housing Ownership in Kentucky");
+        $("h2").html(" ");
 
         var options = {
             center: [37.8, -85.8],
@@ -126,7 +133,8 @@
             // norm = "OWNER";
             norm = "OCCUPIED";
 
-        $.getJSON("ky_counties_housing.json", function (data) { // this is an anonymous function...? why can we just say 'data'? what's the point of anon functions again?
+        // this is an anonymous function...? why can we just say 'data'? what's the point of anon functions again?
+        $.getJSON("ky_counties_housing.json", function (data) { 
             dataLayer = L.geoJson(data, {
                 style: function (feature) {
                     return {
@@ -142,31 +150,25 @@
             drawMap(dataLayer);
         });
 
-        var hoverColor = '#04A777';
-        
-        // event listeners: color change on hover
-        
-        // event listeners: popup on click
-        
-        
-        
 
         // our own functions (not jQuery or Leaflet methods)
         function drawMap(dataLayer) {
             var breaks = getClassBreaks();
-
+            var hoverColor = '#04A777';
+            
             dataLayer.eachLayer(function (layer) {
+                var properColor = getColor(layer.feature.properties[attribute] / layer.feature.properties[norm], breaks);
                 layer.setStyle({
-                    fillColor: getColor(layer.feature.properties[attribute] / layer.feature.properties[norm], breaks)
+                    fillColor: properColor
                     });
                 layer.on('mouseover', function (){
                     layer.setStyle({
                         fillColor: hoverColor
                     })
-                    });
+                });
                 layer.on('mouseout', function () {
                     layer.setStyle({
-                    fillColor: getColor(layer.feature.properties[attribute] / layer.feature.properties[norm], breaks)
+                    fillColor: properColor
                     })
                 });
                 
@@ -211,6 +213,7 @@
 
         function drawLegend(breaks) {
             var legend = L.control({position: 'topleft'});
+            
             legend.onAdd = function () {
                 var div = L.DomUtil.create('div', 'legend');
                 div.innerHTML = "<h3>" + attribute + " per " + norm + "</h3>";
@@ -219,7 +222,7 @@
                     div.innerHTML +=
                         '<span style="background:' + color + '"></span> ' +
                         '<label>' + (breaks[i][0] * 100).toLocaleString() + ' &mdash; ' +
-                        (breaks[i][1] * 100).toLocaleString() + '</label>';
+                        (breaks[i][1] * 100).toLocaleString() + '%</label>';
                 } return div;
             };
             legend.addTo(map);
