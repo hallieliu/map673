@@ -161,6 +161,11 @@
             "OWNED_FREE": "Occupants own free and clear",
             "RENTER": "Rented units"
         }
+        
+        var highlightStyle = {
+            color: 'yellow',
+            weight: 3
+        }
 
         $.getJSON("ky_counties_housing.json", function (data) {
 
@@ -191,8 +196,7 @@
                 var props = layer.feature.properties;
 
                 layer.setStyle({
-                    fillColor: getColor(props[attribute] /
-                        props[norm], breaks)
+                    fillColor: getColor(props[attribute]/props[norm], breaks)
                 });
                 layer.bindPopup("<b>"+layer.feature.properties["NAME"]+" County</b></br>" +
                         labels[attribute] + ": " + ((layer.feature.properties[attribute]/
@@ -200,7 +204,9 @@
 
                 layer.on('mouseover', function () {
                     updateInfo(this);
+                    
                 });
+        
             });
 
             dataLayer.on('mouseover', function () {
