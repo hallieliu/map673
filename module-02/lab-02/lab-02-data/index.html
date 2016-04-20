@@ -139,7 +139,7 @@
 
     <footer>
         <p>Map authored by YOUR NAME</p>
-        <p>Additional information about the data and map goes here.</p>
+        <p>Data for this  map was obtained using <a href = http://factfinder.census.gov/> American Fact Finder</a> and is from the 2010 US Census.</p>
         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis urna magna, maximus nec laoreet sit amet, dictum ultricies nibh. Ut id auctor lacus. Nam a dolor et justo luctus luctus. Duis a elit eget risus dictum vehicula id eu elit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed sed enim nisl. Vestibulum commodo imperdiet lacus, sed facilisis erat placerat sit amet. Nulla consequat malesuada neque eget aliquet. Integer non convallis nisl, gravida ultrices ex. Fusce nec vestibulum elit. Sed elementum lectus ipsum, vulputate elementum ex laoreet a. Aenean eu ex varius, varius felis vitae, efficitur nulla. Quisque pretium laoreet ante, in sodales dui vehicula at. Mauris eu sem sapien.
         </p>
     </footer>
@@ -197,9 +197,10 @@
             dataLayer.eachLayer(function (layer) {
 
                 var props = layer.feature.properties;
-
+                var hoverColor = '#04A777';
+                var properColor = getColor(props[attribute]/props[norm], breaks);
                 layer.setStyle({
-                    fillColor: getColor(props[attribute]/props[norm], breaks)
+                    fillColor: properColor
                 });
                 layer.bindPopup("<b>"+layer.feature.properties["NAME"]+" County</b></br>" +
                         labels[attribute] + ": " + ((layer.feature.properties[attribute]/
@@ -207,7 +208,14 @@
 
                 layer.on('mouseover', function () {
                     updateInfo(this);
-                    
+                    layer.setStyle({
+                    fillColor: hoverColor
+                    });
+                });
+                layer.on('mouseout', function () {
+                    layer.setStyle({
+                    fillColor: properColor
+                    });
                 });
         
             });
