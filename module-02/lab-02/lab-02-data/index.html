@@ -3,7 +3,7 @@
 
 <head>
     <meta charset=utf-8 />
-    <title>Lab 02 Starter</title>
+    <title>Lab 02</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 
     <script src="https://code.jquery.com/jquery-1.12.2.min.js"></script>
@@ -124,10 +124,14 @@
 
     <div id='ui-controls'>
         <label>Choose a property type:</label>
-        <select id='occupied'>
-            <option value='OWNED_MORT' selected>Owned with a mortgage</option>
-            <option value='OWNED_FREE'>Owned free and clear</option>
-            <option value='RENTER'>Rented</option>
+        <select id='vacant'>
+            <option value='VACANT_FOR' selected>Vacant unit available for rent</option>
+            <option value='VACANT_REN'>Rented but vacant unit</option>
+            <option value='VACANT_FO2'>Vacant unit for sale</option>
+            <option value='VACANT_SOL'>Vacant unit, sole not occupied</option>
+            <option value='VACANT_SEA'>Seasonal or recreational use</option>
+            <option value='VACANT_MIG'>Migrant housing</option>
+            <option value='VACANT_OTH'>Vacant for another reason</option>
         </select>
     </div>
 
@@ -152,19 +156,18 @@
         var map = L.map('map', options);
 
         var dataLayer,
-            attribute = "OWNED_MORT",
-            norm = "OCCUPIED";
+            attribute = "VACANT_FOR",
+            norm = "VACANT";
 
         var labels = {
-            "OCCUPIED": "Occupied units",
-            "OWNED_MORT": "Properties with mortgage",
-            "OWNED_FREE": "Occupants own free and clear",
-            "RENTER": "Rented units"
-        }
-        
-        var highlightStyle = {
-            color: 'yellow',
-            weight: 3
+            "VACANT": "Vacant units",
+            "VACANT_FOR": "Vacant units for rent",
+            "VACANT_REN": "Rented but vacant units",
+            "VACANT_FO2": "Vacant units for sale",
+            "VACANT_SOL": "Vacant units just sitting empty", 
+            "VACANT_SEA": "Seasonal or recreational use",
+            "VACANT_MIG": "Migrant housing",
+            "VACANT_OTH": "Vacant for another reason"
         }
 
         $.getJSON("ky_counties_housing.json", function (data) {
@@ -220,7 +223,7 @@
         }
 
         function buildUI() {
-            $('select[id="occupied"]').change(function () {
+            $('select[id="vacant"]').change(function () {
                 attribute = $(this).val();
                 drawMap();
             })
@@ -317,10 +320,14 @@
             var props = layer.feature.properties;
 
             var html = "<h3>" + props['NAME'] + " County</h3>" +
-                "Total occupied units: <b>" + props["OCCUPIED"] + "</b><br>" +
-                "Owned with mortgage or loan: <b>" + props["OWNED_MORT"] + "</b><br>" +
-                "Owned free and clear: <b>" + props["OWNED_FREE"] + "</b><br>" +
-                "Occupied by renters: <b>" + props["RENTER"] + "</b>"
+                "Total vacant units: <b>" + props["VACANT"] + "</b><br>" +
+                "Vacant units for rent: <b>" + props["VACANT_FOR"] + "</b><br>" +
+                "Rented but vacant: <b>" + props["VACANT_REN"] + "</b><br>" +
+                "Vacant units for sale: <b>" + props["VACANT_FO2"] + "</b><br>" +
+                "Just sitting empty: <b>" + props["VACANT_SOL"] + "</b><br>" +
+                "Seasonal/recreational use: <b>" + props["VACANT_SEA"] + "</b><br>" +
+                "Migrant housing: <b>" + props["VACANT_MIG"] + "</b><br>" +
+                "Empty for some other reason: <b>" + props["VACANT_OTH"] + "</b>" 
 
             $(".info").html(html);
         }
