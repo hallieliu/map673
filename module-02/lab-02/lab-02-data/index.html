@@ -1,18 +1,22 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html> <!-- This is an HTML document!!!!!!!!!!!!! -->
+<html>          <!-- We put our HTML between the HTML tags --> 
 
 <head>
     <meta charset=utf-8 />
     <title>Lab 02</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 
+    <!-- load javascript libraries (jQuery, Leaflet, AJAX) -->
     <script src="https://code.jquery.com/jquery-1.12.2.min.js"></script>
     <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-statistics/1.0.1/simple_statistics.js"></script>
 
+    <!-- load stuff for styling the page (leaflet css and Lato font family) -->
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
     <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
 
+    
+    <!-- CSS: style options for page elements are assigned -->
     <style>
         body {
             margin: 0;
@@ -122,30 +126,40 @@
         <h2>Map Subtitle</h2>
     </header>
 
+    
+    <!-- HTML: using html form elements to make a drop-down menu; 
+            the JSON variable is the value, 
+            and the label on the drop down is between the option tags -->
     <div id='ui-controls'>
         <label>Choose a property type:</label>
         <select id='vacant'>
             <option value='VACANT_FOR' selected>Vacant unit available for rent</option>
             <option value='VACANT_REN'>Rented but vacant unit</option>
             <option value='VACANT_FO2'>Vacant unit for sale</option>
-            <option value='VACANT_SOL'>Vacant unit, sole not occupied</option>
+            <option value='VACANT_SOL'>Just sitting empty</option>
             <option value='VACANT_SEA'>Seasonal or recreational use</option>
             <option value='VACANT_MIG'>Migrant housing</option>
             <option value='VACANT_OTH'>Vacant for another reason</option>
         </select>
     </div>
 
+    
+    <!-- HTML: specify which element on the page is the map -->
     <div id='map'></div>
 
+    
+    <!-- HTML: we put our info in the footer element -->
     <footer>
-        <p>Map authored by YOUR NAME</p>
-        <p>Data for this  map was obtained using <a href = http://factfinder.census.gov/> American Fact Finder</a> and is from the 2010 US Census.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis urna magna, maximus nec laoreet sit amet, dictum ultricies nibh. Ut id auctor lacus. Nam a dolor et justo luctus luctus. Duis a elit eget risus dictum vehicula id eu elit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed sed enim nisl. Vestibulum commodo imperdiet lacus, sed facilisis erat placerat sit amet. Nulla consequat malesuada neque eget aliquet. Integer non convallis nisl, gravida ultrices ex. Fusce nec vestibulum elit. Sed elementum lectus ipsum, vulputate elementum ex laoreet a. Aenean eu ex varius, varius felis vitae, efficitur nulla. Quisque pretium laoreet ante, in sodales dui vehicula at. Mauris eu sem sapien.
-        </p>
+        <p>Map authored by Hallie Liu, April 2016</p>
+        <p>This map explores the vacant housing of Kentucky, by county. Percentages shown are based on Total Vacant Units, rather than All Total Units. Data for this  map was obtained using <a href = http://factfinder.census.gov/> American Fact Finder</a> and is from the 2010 US Census.</p>
     </footer>
 
+
+    <!-- JAVASCRIPT: between the script tags we put our javascript -->
     <script>
-        var options = {
+        
+        // setting the map options (thanks, Leaflet!) 
+        var options = {                     
             center: [37.8, -85.8],
             zoom: 7.4,
             minZoom: 7.4,
@@ -153,12 +167,16 @@
             dragging: false,
             zoomControl: false
         }
+        
+        // declaring our map exists
         var map = L.map('map', options);
 
+        // declaring some global variables
         var dataLayer,
             attribute = "VACANT_FOR",
             norm = "VACANT";
 
+        // a variable for labeling the options we put into that html form drop-down
         var labels = {
             "VACANT": "Vacant units",
             "VACANT_FOR": "Vacant units for rent",
@@ -170,8 +188,10 @@
             "VACANT_OTH": "Vacant for another reason"
         }
 
+        // asking jQuery to load our geoJSON file
         $.getJSON("ky_counties_housing.json", function (data) {
-
+            
+            // adding data to our data layer, styling it, and adding it to our map
             dataLayer = L.geoJson(data, {
                 style: function (feature) {
                     return {
@@ -183,53 +203,80 @@
                 }
             }).addTo(map);
 
-            drawLegend();
-            drawMap();
-            drawInfo();
-            buildUI();
+            // calling some other functions to do stuff on the page while we're at it
+            drawLegend();   // draw the legend
+            drawMap();      // draw the map
+            drawInfo();     // draw the info hover box
+            buildUI();      // assign the info from the drop-down menu and redo everything
 
         });
 
+        
+        
+        // OUR FUNCTIONS
+        // These are all the functions we made,
+        // and the ones we called in our jQuery request
+        
+        
+        // the DRAW MAP function colors the county data on our map, 
+        // gets the info for the click + hover popups, 
+        // changes color on hover, 
+        // and updates the legend
         function drawMap() {
-
+            
+            // call the getClassBreaks function
             var breaks = getClassBreaks();
-
+            
+            // for each county
             dataLayer.eachLayer(function (layer) {
 
                 var props = layer.feature.properties;
                 var hoverColor = '#04A777';
                 var properColor = getColor(props[attribute]/props[norm], breaks);
+                
+                // assign it the right color
                 layer.setStyle({
                     fillColor: properColor
                 });
+                
+                // when clicked, make a popup
                 layer.bindPopup("<b>"+layer.feature.properties["NAME"]+" County</b></br>" +
                         labels[attribute] + ": " + ((layer.feature.properties[attribute]/
                                 layer.feature.properties[norm])*100).toLocaleString() + "%");
 
+                // on hover, update the hover info panel and change the county color
                 layer.on('mouseover', function () {
                     updateInfo(this);
                     layer.setStyle({
                     fillColor: hoverColor
                     });
                 });
+                
+                // off hover, go back to the way it was before
                 layer.on('mouseout', function () {
                     layer.setStyle({
                     fillColor: properColor
                     });
                 });
-        
             });
 
+            // show the hover panel when the mouse is hovering over the map
             dataLayer.on('mouseover', function () {
                 $(".info").show();
             });
+            
+            // hide the hover panel when the mouse is not on the map
             dataLayer.on('mouseout', function () {
                 $(".info").hide();
             });
+            
+            // update the legend to keep up with the user
             updateLegend(breaks);
-
         }
 
+        
+        // the BUILD UI function assigns the user input to the correct variables
+        // and then redraws the map based on this input
         function buildUI() {
             $('select[id="vacant"]').change(function () {
                 attribute = $(this).val();
@@ -237,68 +284,78 @@
             })
         }
 
+        
+        // the GET CLASS BREAKS function calculates and assigns breaks to the data
         function getClassBreaks() {
-
+            
+            // make an empty array
             var values = [];
-
+            
+            // normalize the data
             dataLayer.eachLayer(function (layer) {
                 var value = layer.feature.properties[attribute] / layer.feature.properties[norm];
                 values.push(value);
             });
 
+            // figure out where the breaks go using math
             var clusters = ss.ckmeans(values, 5);
 
+            // only keep the first and last values of the breaks and return those
             var breaks = clusters.map(function (cluster) {
                 return [cluster[0], cluster.pop()];
             });
-
             return breaks;
-
         }
 
+        
+        // the GET COLOR function assigns each county a color based on the break values
         function getColor(d, breaks) {
 
-            if (d <= breaks[0][1]) {
+            if (d <= breaks[0][1]) {            // bin 1 gets this color
                 return '#f1eef6';
-            } else if (d <= breaks[1][1]) {
+            } else if (d <= breaks[1][1]) {     // bin 2 gets this color
                 return '#bdc9e1';
-            } else if (d <= breaks[2][1]) {
+            } else if (d <= breaks[2][1]) {     // bin 3 gets this color
                 return '#74a9cf';
-            } else if (d <= breaks[3][1]) {
+            } else if (d <= breaks[3][1]) {     // bin 4 gets this color
                 return '#2b8cbe'
-            } else if (d <= breaks[4][1]) {
+            } else if (d <= breaks[4][1]) {     // bin 5 gets this color
                 return '#045a8d'
             }
         }
 
+        
+        // the DRAW LEGEND function creates the legend
         function drawLegend() {
 
+            // declare our legend's existence and position
             var legend = L.control({
                 position: 'topleft'
             });
 
+            // some method for declaring our legend's existence and adding it to the DOM
             legend.onAdd = function () {
-
                 var div = L.DomUtil.create('div', 'legend');
-
                 return div;
-
-
             };
 
+            // add the legend to the frame where our map is
             legend.addTo(map);
         }
 
+        
+        // the UPDATE LEGEND function updates the legend...
         function updateLegend(breaks) {
 
+            // label the legend with a jQuery request and put the correct variables on it
              var legend = $('.legend').html("<h3>" + labels[attribute] + "</h3><ul>");
-
             legend.html("<h3>" + attribute + " per " + norm + "</h3>");
 
+            // get the colors for the breaks to show on the legend
             for (var i = 0; i < breaks.length; i++) {
-
                 var color = getColor(breaks[i][0], breaks);
 
+                // then add the number values to the correct colors
                 legend.append(
                     '<span style="background:' + color + '"></span> ' +
                     '<label>' + (breaks[i][0] * 100).toLocaleString() + ' &mdash; ' +
@@ -306,27 +363,36 @@
             }
 
         }
-
+        
+        
+        // the DRAW INFO function makes the info box that shows up when the user hovers over a county,
+        // the box summarizes the statistics for each county in totals rather than percentages
         function drawInfo() {
+            
+            // put this box in the top right of the map, please
             var info = L.control({
                 position: 'topright'
             });
 
+            // that method that does stuff about this box's existence and adds it to the DOM (i think)
             info.onAdd = function (map) {
-
                 var div = L.DomUtil.create('div', 'info');
-
                 return div;
-
             }
+            
+            // add the box to the map frame
             info.addTo(map);
+            
+            // but make the box invisible
             $(".info").hide();
         }
-
+        
+        
+        // the UPDATE INFO function puts stuff into the hover summary box
         function updateInfo(layer) {
-
             var props = layer.feature.properties;
-
+            
+            // label and show these attributes
             var html = "<h3>" + props['NAME'] + " County</h3>" +
                 "Total vacant units: <b>" + props["VACANT"] + "</b><br>" +
                 "Vacant units for rent: <b>" + props["VACANT_FOR"] + "</b><br>" +
@@ -337,9 +403,11 @@
                 "Migrant housing: <b>" + props["VACANT_MIG"] + "</b><br>" +
                 "Empty for some other reason: <b>" + props["VACANT_OTH"] + "</b>" 
 
+            // add them to the box
             $(".info").html(html);
         }
-    </script>
+        
+    </script> <!-- THE END OF OUR JAVASCRIPT....FOR NOW -->
 
 </body>
 
