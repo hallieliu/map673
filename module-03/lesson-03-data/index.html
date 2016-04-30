@@ -56,6 +56,38 @@
             font-size: 1em;
             color: #001323;
         }
+        
+        .legend {
+            padding: 6px 8px;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+        
+        .legend h3 {
+            font-size: 1.1em;
+            font-weight: bold ;
+            color: #001323;
+            margin: 0 0 10px 0;
+        }
+        
+        .legend span {
+            width: 20px;
+            height: 20px;
+            float: left;
+            margin: 0 10px 4px 0;
+        }
+        
+        .legend label {
+            font-size: 1.1em;
+        }
+        
+        .legend label:after {
+            content: '';
+            display: block;
+            clear: both;
+        }
     </style>
 </head>
 
@@ -89,7 +121,7 @@
         var dataLayer, 
             year = 2010,
             hoverColor = '#ffe979',
-            colorSeq = ['#fee5d9','#fcae91','#fb6a4a','#de2d26','#a50f15'];
+            colorSeq = ['#fee5d9','#fcbba1','#fc9272','#fb6a4a','#de2d26','#a50f15'];
 
         
         // AJAX requests to load data files
@@ -152,9 +184,10 @@
                 
                 var props = layer.feature.properties;
                 console.log(props[year]);
+                console.log(props.State_Name);
                
                 var properColor = getColor(props[year], breaks);
-                console.log(properColor);
+                //console.log(properColor);
                 
                 layer.setStyle({
                         fillColor: properColor
@@ -162,7 +195,7 @@
                  
             });
             
-           // updateLegend(breaks);
+            updateLegend(breaks);
         }
 
         
@@ -172,14 +205,14 @@
             var values = [];
             
             dataLayer.eachLayer(function (layer) {
-                var value = layer.feature.properties[year];
+                var value = parseFloat(layer.feature.properties[year]);
                     values.push(value);
             });
             
-            console.log(values);
+            //console.log(values);
             var breaks = ss.quantile(values, [0, 0.2, 0.4, 0.6, 0.8, 1]);
             
-            console.log(breaks);
+           // console.log(breaks);
             return breaks;
             
         }
@@ -198,10 +231,9 @@
                 return colorSeq[3];
             } else if (d <= breaks[4]) {     
                 return colorSeq[4];
+            } else if (d <= breaks[5]) {     
+                return colorSeq[5];
             }
-            else {
-                return '#dddddd';
-            } //************************ERROR: Some states returning as undefined, idk why! D:**************
         }
 
         
@@ -224,8 +256,19 @@
         // function to update the legend
         function updateLegend(breaks){
             
+            var legend = $('.legend').html("<h3>" + year + "</h3><ul>");
             
+            legend.html("<h3>Unemployment Rate in " + year + "</h3>");
+
+            for (var i = 0; i < breaks.length; i++) {
+                console.log(breaks);
+                legend.append(
+                    '<span style="background:' + colorSeq[i] + '"></span> ' +
+                    '<label>' + (breaks[i]).toLocaleString() + ' &mdash; ' +
+                    (breaks[i+1]).toLocaleString() + '%</label>');
+            }
         }
+
 
         // function to create the range slider
     </script>
