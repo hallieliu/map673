@@ -74,20 +74,24 @@
             dragging: true,
             zoomControl: true
         }
+        
         var map = L.map('map', options);
 
+        
         // load map tiles and add to map
         var tiles = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
             maxZoom: 16
         }).addTo(map);
 
+       
         // declare global variables
         var dataLayer, 
             year = 2010,
             hoverColor = '#ffe979',
             colorSeq = ['#fee5d9','#fcae91','#fb6a4a','#de2d26','#a50f15'];
 
+        
         // AJAX requests to load data files
         $.getJSON("us-states.json", function (states) {
             Papa.parse('states-unemployment.csv', {
@@ -101,6 +105,7 @@
 
 
 
+        // OUR FUNCTIONS     
         // function to process/bind data
         function processData(states, data) {
 
@@ -114,79 +119,113 @@
                     }
                 }
             }
-            // console.log(states);
-            //drawLegend(states);
+            
+            drawLegend();
             drawMap(states);
+            updateMap(states);
         }
 
 
         // function to draw the map
         function drawMap(states) {
+           
             dataLayer = L.geoJson( states, {
+               
                 style: function (feature) {
                     return {
-                        color: '#ffffff',
+                        color: '#ffffff',       // lines: white
                         weight: 2,
                         fillOpacity: 1,
-                        fillColor: '#000000'
+                        fillColor: '#000000'    // fill: black
                     };
                 }
-            }).addTo(map);
-            var breaks = getClassBreaks();
-            dataLayer.eachLayer(function (layer) {
-               var props = layer.feature.properties[year];
-                props = parseFloat(props);
-               var newColor = getColor(props, breaks);
-               layer.setStyle({
-                   
-                    fillColor: newColor//getColor(props, breaks)
-                });
-            
-            });
+            }).addTo(map); 
         }
 
+        
         // function to update the map
+        function updateMap(states){
+            
+            var breaks = getClassBreaks();
+            
+            dataLayer.eachLayer(function (layer) {
+                
+                var props = layer.feature.properties;
+                console.log(props[year]);
+               
+                var properColor = getColor(props[year], breaks);
+                console.log(properColor);
+                
+                layer.setStyle({
+                        fillColor: properColor
+                });
+                 
+            });
+            
+           // updateLegend(breaks);
+        }
 
+        
         // function to get the class breaks
         function getClassBreaks(){
+            
             var values = [];
+            
             dataLayer.eachLayer(function (layer) {
-                    var value = parseFloat(layer.feature.properties[year]);
+                var value = layer.feature.properties[year];
                     values.push(value);
             });
+            
+            console.log(values);
             var breaks = ss.quantile(values, [0, 0.2, 0.4, 0.6, 0.8, 1]);
+            
+            console.log(breaks);
             return breaks;
+            
         }
 
         
         // function to get the color value
         function getColor(d, breaks){
-           if (d <= breaks[0][1]) {            // bin 1 gets this color
-                return colorSeq[0];
-            } else if (d <= breaks[1][2]) {     // bin 2 gets this color
+           
+            if (d <= breaks[0]) {          
+               return colorSeq[0];
+            } else if (d <= breaks[1]) {     
                 return colorSeq[1];
-            } else if (d <= breaks[2][3]) {     // bin 3 gets this color
+            } else if (d <= breaks[2]) {     
                 return colorSeq[2];
-            } else if (d <= breaks[3][4]) {     // bin 4 gets this color
+            } else if (d <= breaks[3]) {     
                 return colorSeq[3];
-            } else if (d <= breaks[4][5]) {     // bin 5 gets this color
-                return '#a50f15';
+            } else if (d <= breaks[4]) {     
+                return colorSeq[4];
             }
+            else {
+                return '#dddddd';
+            } //************************ERROR: Some states returning as undefined, idk why! D:**************
         }
 
+        
         // function to draw the legend
         function drawLegend(){
+           
             var legend = L.control({
                 position: 'bottomright'
             });
+            
             legend.onAdd = function () {
                 var div = L.DomUtil.create('div', 'legend');
                 return div;
             };
+           
             legend.addTo(map);
         }
 
+        
         // function to update the legend
+        function updateLegend(breaks){
+            
+            
+        }
 
         // function to create the range slider
     </script>
