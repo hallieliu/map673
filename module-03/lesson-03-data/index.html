@@ -256,16 +256,26 @@
         // function to update the legend
         function updateLegend(breaks){
             
+            var breaker = 0;
+            breaks.push(breaker);
+            
             var legend = $('.legend').html("<h3>" + year + "</h3><ul>");
+            var legendLabels = [];
+            
+            var first = (breaks[0]);
+            var firstLabel = '0 &mdash; '+ first;
+            legendLabels.push(firstLabel);
             
             legend.html("<h3>Unemployment Rate in " + year + "</h3>");
 
             for (var i = 0; i < breaks.length; i++) {
-                console.log(breaks);
+                var label = (breaks[i]).toLocaleString() + ' &mdash; ' + (breaks[i+1]).toLocaleString();
+                legendLabels.push(label);
+                console.log(legendLabels);
+                    
                 legend.append(
                     '<span style="background:' + colorSeq[i] + '"></span> ' +
-                    '<label>' + (breaks[i]).toLocaleString() + ' &mdash; ' +
-                    (breaks[i+1]).toLocaleString() + '%</label>');
+                    '<label>' + legendLabels[i] + '%</label>');
             }
         }
 
