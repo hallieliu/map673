@@ -128,6 +128,24 @@
             font-size: 1.1em;
             font-weight: bold;
         }
+        
+        .leaflet-popup-content {
+            max-width: 180px;
+        }
+        
+        .info {
+            padding: 6px 8px;
+            font-size: 1em;
+            background: rgba(75, 75, 75, 0.8);
+            color: whitesmoke;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .info h3 {
+            margin: 0;
+        }
     </style>
 </head>
 
@@ -140,27 +158,330 @@
         </label>
     </div>
 
-    
+
     <script>
-       // instantiate the Leaflet map
-        
+        // instantiate the Leaflet map
+        var options = {
+            center: [37.5, -85],
+            zoom: 7,
+            minZoom: 4,
+            maxZoom: 16,
+            dragging: true,
+            zoomControl: true
+        }
+
+        var map = L.map('map', options);
+
+
         // load map tiles and add to map
-        
+        var tiles = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+            maxZoom: 16
+        }).addTo(map);
+
+
         // declare global variables
-        
+        var dataLayer,
+            year = 2000,
+            colorSeq = ['#fff7fb', '#ece7f2', '#d0d1e6', '#a6bddb', '#74a9cf', '#3690c0', '#0570b0', '#034e7b'],
+            hoverColor = '#f18f01';
+
+
         // AJAX requests to load data files
-        
-        
-        // OUR FUNCTIONS     
+        $.getJSON("ky-counties.json", function (counties) {
+
+            Papa.parse('ky-unemployment-data.csv', {
+                download: true,
+                header: true,
+                complete: function (data) {
+                    processData(counties, data);
+                }
+            });
+
+        });
+
+
+
+        // ------------------------
+        // ***THE FUNCTIONS ZONE***  
+        // ------------------------
+
+
         // function to process/bind data
+        function processData(counties, data) {
+
+            for (var county in counties.features) {
+                var props = counties.features[county].properties;
+
+                for (var d in data.data) {
+                    if (props.COUNTY_FIP == data.data[d].CNTY) {
+                        counties.features[county].properties = data.data[d];
+                        break;
+                    }
+                }
+            }
+
+            //console.log(counties);
+            drawLegend();
+            drawMap(counties);
+            updateMap();
+        }
+
+
         // function to draw the map
+        function drawMap(counties) {
+
+            dataLayer = L.geoJson(counties, {
+
+                style: function (feature) {
+                    return {
+                        color: '#ffffff', // lines: white
+                        weight: 2,
+                        fillOpacity: 1,
+                        fillColor: '#000000' // fill: black
+                    };
+                }
+
+            }).addTo(map);
+
+        }
+
+
         // function to update the map
+        function updateMap() {
+
+            var breaks = getClassBreaks();
+
+            dataLayer.eachLayer(function (layer) {
+
+                var props = layer.feature.properties;
+                //console.log(props[year]);
+
+                var properColor = getColor(props[year], breaks);
+                //console.log(properColor);
+
+                layer.setStyle({
+                   fillColor: properColor
+                });
+
+            });
+
+            updateLegend(breaks);
+            drawSlider();
+            estVizGoods();
+        }
+
+
         // function to get the class breaks
+        function getClassBreaks() {
+
+            var values = [];
+
+            dataLayer.eachLayer(function (layer) {
+                var value = parseFloat(layer.feature.properties[year]);
+                //console.log(value);
+                values.push(value);
+            });
+
+            //console.log(values);
+            var breaks = ss.quantile(values, [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]);
+
+            //console.log(breaks);
+            return breaks;
+
+        }
+
+
         // function to get the color value
+        function getColor(d, breaks) {
+            if (d <= breaks[1]) {
+                return colorSeq[0];
+            } else if (d <= breaks[2]) {
+                return colorSeq[1];
+            } else if (d <= breaks[3]) {
+                return colorSeq[2];
+            } else if (d <= breaks[4]) {
+                return colorSeq[3];
+            } else if (d <= breaks[5]) {
+                return colorSeq[4];
+            } else if (d <= breaks[6]) {
+                return colorSeq[5];
+            } else if (d <= breaks[7]) {
+                return colorSeq[6];
+            } else if (d <= breaks[8]) {
+                return colorSeq[7];
+            }
+        }
+
+        
         // function to draw the legend
+        function drawLegend() {
+
+            var legend = L.control({
+                position: 'bottomright'
+            });
+
+            legend.onAdd = function () {
+                var div = L.DomUtil.create('div', 'legend');
+                return div;
+            };
+
+            legend.addTo(map);
+            drawInfo();
+        }
+
+
         // function to update the legend
+        function updateLegend(breaks) {
+
+            var legend = $('.legend').html("<h3>" + year + "</h3><ul>");
+            var legendLabels = [];
+
+            legend.html("<h3>Unemployment Rate: " + year + "</h3>");
+
+            for (var i = 0; i < 8; i++) {
+                
+                var label = (breaks[i]).toLocaleString() + ' &mdash; ' + (breaks[i+1]).toLocaleString();
+                legendLabels.push(label);
+                //console.log(legendLabels);
+
+                legend.append(
+                    '<span style="background:' + colorSeq[i] + '"></span> ' +
+                    '<label>' + legendLabels[i] + '%</label>');
+            }
+            
+        }
+        
+        
         // function to create the range slider
+        function drawSlider() {
+
+            // create a Leaflet control object and store a reference to it in a variable
+            var sliderControl = L.control({
+                position: 'bottomright'
+            });
+
+            // when we add this control object to the map
+            sliderControl.onAdd = function (map) {
+
+                // select an existing DOM element with an id of "ui-controls"
+                var slider = L.DomUtil.get("ui-controls");
+
+                // when the user clicks on the slider element
+                L.DomEvent.addListener(slider, 'mousedown', function (e) {
+
+                    // prevent the click event from bubbling up to the map
+                    L.DomEvent.stopPropagation(e);
+
+                });
+
+                // return the slider from the onAdd method
+                return slider;
+            }
+
+            // add the control object containing our slider element to the map
+            sliderControl.addTo(map);
+
+            $(".year-slider")
+                .on('input change', function () {
+                    year = $(this).val();
+                    updateMap();
+                });
+        }
+
+        
         // function to create functional visual goodies
+        function estVizGoods(){
+            
+            dataLayer.eachLayer(function (layer) {
+
+                var props = layer.feature.properties;
+                var breaks = getClassBreaks();
+        
+                // when clicked, make a popup
+                layer.bindPopup("<b>"+layer.feature.properties["NAME"]+" County</b></br>" +
+                        year + " Unemployment Rate: " + layer.feature.properties[year].toLocaleString() + "%");
+
+                // on hover, update the hover info panel and change the county color
+                layer.on('mouseover', function () {
+                    updateInfo(this);
+                    layer.setStyle({
+                    color: hoverColor,
+                    weight: 5
+                    });
+                });
+                
+                // off hover, go back to the way it was before
+                layer.on('mouseout', function () {
+                    layer.setStyle({
+                    color: '#ffffff',
+                    weight: 2
+                    });
+                });
+            });
+
+            // show the hover panel when the mouse is hovering over the map
+            dataLayer.on('mouseover', function () {
+                $(".info").show();
+            });
+            
+            // hide the hover panel when the mouse is not on the map
+            dataLayer.on('mouseout', function () {
+                $(".info").hide();
+            });
+            
+        } 
+    
+        
+        // function to create info panel on hover
+        function drawInfo() {
+            
+            // put this box in the top right of the map, please
+            var info = L.control({
+                position: 'topleft'
+          });
+
+            // that method that does stuff about this box's existence and adds it to the DOM (i think)
+            info.onAdd = function (map) {
+                var div = L.DomUtil.create('div', 'info');
+                return div;
+            }
+            
+            // add the box to the map frame
+            info.addTo(map);
+            
+            // but make the box invisible
+            $(".info").hide();
+        }
+        
+        
+        // function to update info panel
+        function updateInfo(layer) {
+            
+            var props = layer.feature.properties;
+            
+            // label and show these attributes
+            var html = "<h3>" + props['NAME'] + " County</h3>" +
+                "2000: " + props[2000] + "%<br>" +
+                "2001: " + props[2001] + "%<br>" +
+                "2002: " + props[2002] + "%<br>" +
+                "2003: " + props[2003] + "%<br>" +
+                "2004: " + props[2004] + "%<br>" +
+                "2005: " + props[2005] + "%<br>" +
+                "2006: " + props[2006] + "%<br>" +
+                "2007: " + props[2007] + "%<br>" +
+                "2008: " + props[2008] + "%<br>" +
+                "2009: " + props[2009] + "%<br>" +
+                "2010: " + props[2010] + "%<br>" +
+                "2011: " + props[2011] + "%<br>" +
+                "2012: " + props[2012] + "%<br>" +
+                "2013: " + props[2013] + "%<br>"
+        
+            // add them to the box
+            $(".info").html(html);
+        }
+        
+        
     </script>
 
 </body>
