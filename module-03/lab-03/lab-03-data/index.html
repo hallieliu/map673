@@ -210,6 +210,7 @@
         // function to process/bind data
         function processData(counties, data) {
 
+        // loop through county data and bind data from csv file to each county
             for (var county in counties.features) {
                 var props = counties.features[county].properties;
 
@@ -217,18 +218,21 @@
                     if (props.COUNTY_FIP == data.data[d].CNTY) {
                         counties.features[county].properties = data.data[d];
                         break;
+                        // when all the data matches, stop
                     }
                 }
             }
 
             //console.log(counties);
-            drawLegend();
+
+            // call functions that visualize the data and add it to the map
+            drawLegend();          
             drawMap(counties);
             updateMap();
         }
 
 
-        // function to draw the map
+        // function to draw the map in the map
         function drawMap(counties) {
 
             dataLayer = L.geoJson(counties, {
@@ -266,6 +270,7 @@
 
             });
 
+            // call other functions that update the map
             updateLegend(breaks);
             drawSlider();
             estVizGoods();
@@ -278,12 +283,15 @@
             var values = [];
 
             dataLayer.eachLayer(function (layer) {
+                // add values for the specified year to an array, and convert them from strings to numbers
                 var value = parseFloat(layer.feature.properties[year]);
                 //console.log(value);
                 values.push(value);
             });
 
             //console.log(values);
+
+            // use quantile classification with 8 bins to divvy the data from the array
             var breaks = ss.quantile(values, [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]);
 
             //console.log(breaks);
@@ -294,6 +302,8 @@
 
         // function to get the color value
         function getColor(d, breaks) {
+            
+            // assign colors to each county from the colorSeq array based on which quantile they belong to
             if (d <= breaks[1]) {
                 return colorSeq[0];
             } else if (d <= breaks[2]) {
@@ -321,12 +331,15 @@
                 position: 'bottomright'
             });
 
+            // add legend to the DOM
             legend.onAdd = function () {
                 var div = L.DomUtil.create('div', 'legend');
                 return div;
             };
 
             legend.addTo(map);
+
+            // call function to create info panel
             drawInfo();
         }
 
