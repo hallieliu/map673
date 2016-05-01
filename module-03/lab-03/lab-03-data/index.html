@@ -217,8 +217,8 @@
                 for (var d in data.data) {
                     if (props.COUNTY_FIP == data.data[d].CNTY) {
                         counties.features[county].properties = data.data[d];
-                        break;
                         // when all the data matches, stop
+                        break;
                     }
                 }
             }
@@ -235,8 +235,10 @@
         // function to draw the map in the map
         function drawMap(counties) {
 
+            // add geoJSON data to a feature layer
             dataLayer = L.geoJson(counties, {
 
+                // style the layer
                 style: function (feature) {
                     return {
                         color: '#ffffff', // lines: white
@@ -254,8 +256,10 @@
         // function to update the map
         function updateMap() {
 
+            // get the breaks 
             var breaks = getClassBreaks();
 
+            // assign correct color to each county
             dataLayer.eachLayer(function (layer) {
 
                 var props = layer.feature.properties;
@@ -280,9 +284,11 @@
         // function to get the class breaks
         function getClassBreaks() {
 
+            // an empty array to hold the data
             var values = [];
 
             dataLayer.eachLayer(function (layer) {
+                
                 // add values for the specified year to an array, and convert them from strings to numbers
                 var value = parseFloat(layer.feature.properties[year]);
                 //console.log(value);
@@ -327,6 +333,7 @@
         // function to draw the legend
         function drawLegend() {
 
+            // declare the legend and assign position
             var legend = L.control({
                 position: 'bottomright'
             });
@@ -337,6 +344,7 @@
                 return div;
             };
 
+            // add legend to the map
             legend.addTo(map);
 
             // call function to create info panel
@@ -347,11 +355,16 @@
         // function to update the legend
         function updateLegend(breaks) {
 
+            // style the legend
             var legend = $('.legend').html("<h3>" + year + "</h3><ul>");
+            
+            // an empty array to house the labels
             var legendLabels = [];
 
+            // update the legend title
             legend.html("<h3>Unemployment Rate: " + year + "</h3>");
 
+            // create the labels and match them with the correct colors
             for (var i = 0; i < 8; i++) {
                 
                 var label = (breaks[i]).toLocaleString() + ' &mdash; ' + (breaks[i+1]).toLocaleString();
@@ -395,17 +408,20 @@
             // add the control object containing our slider element to the map
             sliderControl.addTo(map);
 
+            // when the slider moves, adjust the 'year' value to match
             $(".year-slider")
                 .on('input change', function () {
                     year = $(this).val();
+                    // then update the map to match
                     updateMap();
                 });
         }
 
         
-        // function to create functional visual goodies
+        // function to create functional visual goodies (hover, info panel, popups)
         function estVizGoods(){
             
+            // for each county
             dataLayer.eachLayer(function (layer) {
 
                 var props = layer.feature.properties;
@@ -415,7 +431,7 @@
                 layer.bindPopup("<b>"+layer.feature.properties["NAME"]+" County</b></br>" +
                         year + " Unemployment Rate: " + layer.feature.properties[year].toLocaleString() + "%");
 
-                // on hover, update the hover info panel and change the county color
+                // on hover, update the hover info panel and change the county stroke color
                 layer.on('mouseover', function () {
                     updateInfo(this);
                     layer.setStyle({
@@ -454,7 +470,7 @@
                 position: 'topleft'
           });
 
-            // that method that does stuff about this box's existence and adds it to the DOM (i think)
+            // when the panel is added to the map, also add it to the DOM
             info.onAdd = function (map) {
                 var div = L.DomUtil.create('div', 'info');
                 return div;
