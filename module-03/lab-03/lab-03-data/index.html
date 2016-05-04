@@ -141,6 +141,7 @@
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
             border-radius: 5px;
             text-align: center;
+            width: 160px;
         }
         
         .info h3 {
@@ -229,6 +230,7 @@
             drawLegend();          
             drawMap(counties);
             updateMap();
+            drawSlider();
         }
 
 
@@ -276,7 +278,6 @@
 
             // call other functions that update the map
             updateLegend(breaks);
-            drawSlider();
             estVizGoods();
         }
 
