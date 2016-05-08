@@ -42,9 +42,17 @@
             maxZoom: 9,
             maxBounds: L.latLngBounds([-6.22, 27.72], [5.76, 47.83])
         });
+
+        omnivore.geojson('population-kenya-counties-2009.geojson').addTo(map);
+        omnivore.csv('lighting-energy-kenya-counties-2009.csv').addTo(map);
         
-        omnivore.csv('kenya_education_2014.csv').addTo(map);
-        
+        //omnivore.csv('population-kenya-counties-2009.geojson.csv')
+        //    .on('ready', function (e) {
+        //        console.log(e.target)
+        //    })
+        //    .on('error', function (e) {
+        //        console.log(e.error[0].message);
+        //    });
     </script>
 
 </body>
