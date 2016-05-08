@@ -2,10 +2,10 @@
 
 ** DATASETS: **
 Primary Household Energy Source by County (2009),
-County Population (2009)
+County Population (2009), Kenyan Counties
 
 ** Data Source: **
-[Kenya's open data portal](https://www.opendata.go.ke/)
+[Kenya's open data portal](https://www.opendata.go.ke/), [Open Africa](https://africaopendata.org/dataset/kenya-counties-shapefile)
 
 ** Scenario ** - An NGO called Energy Everywhere aims to improve access to electricity in developing populations. They are investigating how Kenyans currently power their households, and want to know more about what sources are available and which ones are most used, as well as how many households in each county are without power.  EE wants to make a map summarizing the data they've been provided by the Kenyan Government.
 
