@@ -62,7 +62,15 @@
             'solar',
             'other'
         ],
-            radiusMultiplier = .6;
+            radiusMultiplier = .6,
+            electricity,
+            p_lamp,
+            lantern,
+            tin_lamp,
+            gas_lamp,
+            wood,
+            solar,
+            other;
 
         //var counties = omnivore.geojson('population-kenya-counties-2009.geojson').addTo(map);
         var energy = omnivore.csv('lighting-energy-kenya-counties-2009.csv')
@@ -75,12 +83,14 @@
         //.addTo(map);      ****** the drawMap() function now adds the data to the map *****
 
         //console.log(energy);
+        
+        sequenceUI();
 
 
 
         function drawMap(energyData) {
 
-            var electricity = L.geoJson(energyData, {
+            electricity = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#D96D02',
@@ -92,7 +102,7 @@
                 }
             }).addTo(map);
 
-            var p_lamp = L.geoJson(energyData, {
+             p_lamp = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#1cce58',
@@ -104,7 +114,7 @@
                 }
             }).addTo(map);
 
-            var lantern = L.geoJson(energyData, {
+             lantern = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#1d198d',
@@ -116,7 +126,7 @@
                 }
             }).addTo(map);
 
-            var tin_lamp = L.geoJson(energyData, {
+             tin_lamp = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#a0408d',
@@ -128,7 +138,7 @@
                 }
             }).addTo(map);
 
-            var gas_lamp = L.geoJson(energyData, {
+             gas_lamp = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#cf4c1f',
@@ -140,7 +150,7 @@
                 }
             }).addTo(map);
 
-            var wood = L.geoJson(energyData, {
+            wood = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#3b7326',
@@ -152,7 +162,7 @@
                 }
             }).addTo(map);
 
-            var solar = L.geoJson(energyData, {
+             solar = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#e6ab02',
@@ -164,7 +174,7 @@
                 }
             }).addTo(map);
 
-            var other = L.geoJson(energyData, {
+            other = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#1a7acc',
@@ -176,17 +186,17 @@
                 }
             }).addTo(map);
 
-            updateSymbols(electricity, p_lamp, lantern, tin_lamp, gas_lamp, wood, solar, other);
+            updateSymbols();
 
             //console.log(energyData);
         }
 
         function calcRadius(val) {
             var radius = Math.sqrt(val / Math.PI);
-            return radius * .6;
+            return radius * radiusMultiplier;
         }
 
-        function updateSymbols(electricity, p_lamp, lantern, tin_lamp, gas_lamp, wood, solar, other) {
+        function updateSymbols() {
 
             electricity.eachLayer(function (layer) {
                 layer.setRadius(calcRadius(Number(layer.feature.properties.electricity)));
