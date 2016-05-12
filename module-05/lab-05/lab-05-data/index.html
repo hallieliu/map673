@@ -11,6 +11,7 @@
     <link href='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.css' rel='stylesheet' />
     <script src='https://code.jquery.com/jquery-1.12.0.min.js'></script>
     <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.2.0/leaflet-omnivore.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/simple-statistics/1.0.1/simple_statistics.min.js'></script>
 
     <style>
         body {
@@ -30,6 +31,21 @@
             top: 20px;
             left: 60px;
         }
+        
+        #multiplier {
+            position: absolute;
+            left: 60px;
+            top: 50px;
+            padding: 6px 15px 8px;
+            background: whitesmoke;
+            border: 2px solid #d3d3d3;
+        }
+        
+        #legend {
+            position: absolute;
+            right: 0;
+            bottom: 30px;
+        }
     </style>
 
 </head>
@@ -38,8 +54,14 @@
 
     <div id='map'></div>
     <div id="ui-slider">
-        <input type="range" min=".1" , max="1" , value=".6" , step=".1" class="slider">
+        <input type="range" min=".1" , max="3" , value=".3" , step=".01" class="slider">
     </div>
+    <div id="multiplier">Symbol Size</div>
+    <div id="legend">
+        <h3>Energy Sources, 2009</h3>
+        <svg class="legend" width="200" height="200"></svg>
+    </div>
+    
 
     <script>
         L.mapbox.accessToken = 'pk.eyJ1IjoiaGFsbGllbGl1IiwiYSI6ImNpbnFhMGQwNDAwZWZ3N2tsMjMxa3RxNGkifQ.dJnzRSGnzwTOJduI5IEeJA';
@@ -52,17 +74,17 @@
             maxBounds: L.latLngBounds([-6.22, 27.72], [5.76, 47.83])
         });
 
-        var energyCategories = [
-            'electricity',
-            'p_lamp',
-            'lantern',
-            'tin_lamp',
-            'gas_lamp',
-            'wood',
-            'solar',
-            'other'
-        ],
-            radiusMultiplier = .6,
+        var energyCategories = {
+            'Electricity': electricity,
+            'Pressure Lamp': p_lamp,
+            'Lantern': lantern,
+            'Tin Lamp': tin_lamp,
+            'Gas Lamp': gas_lamp,
+            'Wood': wood,
+            'Solar': solar,
+            'Other': other
+       },
+            radiusMultiplier = .3,
             electricity,
             p_lamp,
             lantern,
@@ -83,7 +105,7 @@
         //.addTo(map);      ****** the drawMap() function now adds the data to the map *****
 
         //console.log(energy);
-        
+
         sequenceUI();
 
 
@@ -102,7 +124,7 @@
                 }
             }).addTo(map);
 
-             p_lamp = L.geoJson(energyData, {
+            p_lamp = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#1cce58',
@@ -114,7 +136,7 @@
                 }
             }).addTo(map);
 
-             lantern = L.geoJson(energyData, {
+            lantern = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#1d198d',
@@ -126,7 +148,7 @@
                 }
             }).addTo(map);
 
-             tin_lamp = L.geoJson(energyData, {
+            tin_lamp = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#a0408d',
@@ -138,7 +160,7 @@
                 }
             }).addTo(map);
 
-             gas_lamp = L.geoJson(energyData, {
+            gas_lamp = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#cf4c1f',
@@ -162,7 +184,7 @@
                 }
             }).addTo(map);
 
-             solar = L.geoJson(energyData, {
+            solar = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
                         color: '#e6ab02',
@@ -198,46 +220,97 @@
 
         function updateSymbols() {
 
+            var radius, // variable to hold each radius
+                allRadii = []; // empty array to hold all values
+
             electricity.eachLayer(function (layer) {
-                layer.setRadius(calcRadius(Number(layer.feature.properties.electricity)));
+                radius = calcRadius(Number(layer.feature.properties.electricity));
+                layer.setRadius(radius);
+                allRadii.push(radius); // push radius value into the array
             });
 
             p_lamp.eachLayer(function (layer) {
-                layer.setRadius(calcRadius(Number(layer.feature.properties.p_lamp)));
+                radius = calcRadius(Number(layer.feature.properties.p_lamp));
+                layer.setRadius(radius);
+                allRadii.push(radius);
             });
 
             lantern.eachLayer(function (layer) {
-                layer.setRadius(calcRadius(Number(layer.feature.properties.lantern)));
+                radius = calcRadius(Number(layer.feature.properties.lantern));
+                layer.setRadius(radius);
+                allRadii.push(radius);
             });
 
             tin_lamp.eachLayer(function (layer) {
-                layer.setRadius(calcRadius(Number(layer.feature.properties.tin_lamp)));
+                radius = calcRadius(Number(layer.feature.properties.tin_lamp));
+                layer.setRadius(radius);
+                allRadii.push(radius);
             });
 
             gas_lamp.eachLayer(function (layer) {
-                layer.setRadius(calcRadius(Number(layer.feature.properties.gas_lamp)));
+                radius = calcRadius(Number(layer.feature.properties.gas_lamp));
+                layer.setRadius(radius);
+                allRadii.push(radius);
             });
 
             wood.eachLayer(function (layer) {
-                layer.setRadius(calcRadius(Number(layer.feature.properties.wood)));
+                radius = calcRadius(Number(layer.feature.properties.wood));
+                layer.setRadius(radius);
+                allRadii.push(radius);
             });
 
             solar.eachLayer(function (layer) {
-                layer.setRadius(calcRadius(Number(layer.feature.properties.Solar)));
+                radius = calcRadius(Number(layer.feature.properties.Solar));
+                layer.setRadius(radius);
+                allRadii.push(radius);
             });
 
             other.eachLayer(function (layer) {
-                layer.setRadius(calcRadius(Number(layer.feature.properties.other)));
+                radius = calcRadius(Number(layer.feature.properties.other));
+                layer.setRadius(radius);
+                allRadii.push(radius);
             });
+
+            drawLegend(allRadii);
         }
 
         function sequenceUI() {
+
+            //var output = $('#multiplier span');
 
             $('.slider')
                 .on('input change', function () {
                     radiusMultiplier = $(this).val();
                     updateSymbols();
+                    //output.html(radiusMultiplier);
                 });
+        }
+
+        function drawLegend(allRadii) {
+
+            var legend = $('.legend');
+
+            var circles = {
+                max: ss.max(allRadii),
+                median: ss.median(allRadii),
+                min: ss.min(allRadii)
+            }
+
+            var svgCircles = '';
+
+            var reverseCalc = function (radius) {
+                return Math.round((Math.pow(radius / radiusMultiplier, 2) * Math.PI));
+            }
+
+            for (var circle in circles) {
+
+                svgCircles += '<circle cx="' + 100 + '" cy="' + (circles[circle] - 180) * -1 + '" r="' + circles[circle] + '" stroke="#d3d3d3" stroke-width="1" fill="ghostwhite" />';
+
+                svgCircles += '<text x="' + 80 + '" y = "' + (circles[circle] - 160) * -1 + '" fill= "green">' + reverseCalc(circles[circle]) + '</text>'
+            }
+
+            legend.html(svgCircles)
+
         }
     </script>
 
