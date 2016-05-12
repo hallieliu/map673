@@ -4,7 +4,7 @@
 <head>
 
     <meta charset=utf-8 />
-    <title>A simple map</title>
+    <title>Kenyan Household Energy Sources</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 
     <script src='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js'></script>
@@ -24,6 +24,12 @@
             bottom: 0;
             width: 100%;
         }
+        
+        #ui-slider {
+            position: absolute;
+            top: 20px;
+            left: 60px;
+        }
     </style>
 
 </head>
@@ -31,28 +37,198 @@
 <body>
 
     <div id='map'></div>
+    <div id="ui-slider">
+        <input type="range" min=".1" , max="1" , value=".6" , step=".1" class="slider">
+    </div>
 
     <script>
         L.mapbox.accessToken = 'pk.eyJ1IjoiaGFsbGllbGl1IiwiYSI6ImNpbnFhMGQwNDAwZWZ3N2tsMjMxa3RxNGkifQ.dJnzRSGnzwTOJduI5IEeJA';
 
         var map = L.mapbox.map('map', 'mapbox.light', {
             center: [-.23, 37.8],
-            zoom: 7,
+            zoom: 6,
             minZoom: 6,
             maxZoom: 9,
             maxBounds: L.latLngBounds([-6.22, 27.72], [5.76, 47.83])
         });
 
-        omnivore.geojson('population-kenya-counties-2009.geojson').addTo(map);
-        omnivore.csv('lighting-energy-kenya-counties-2009.csv').addTo(map);
-        
-        //omnivore.csv('population-kenya-counties-2009.geojson.csv')
-        //    .on('ready', function (e) {
-        //        console.log(e.target)
-        //    })
-        //    .on('error', function (e) {
-        //        console.log(e.error[0].message);
-        //    });
+        var energyCategories = [
+            'electricity',
+            'p_lamp',
+            'lantern',
+            'tin_lamp',
+            'gas_lamp',
+            'wood',
+            'solar',
+            'other'
+        ],
+            radiusMultiplier = .6;
+
+        //var counties = omnivore.geojson('population-kenya-counties-2009.geojson').addTo(map);
+        var energy = omnivore.csv('lighting-energy-kenya-counties-2009.csv')
+            .on('ready', function (e) {
+                drawMap(e.target.toGeoJSON())
+            })
+            .on('error', function (e) {
+                console.log(e.error[0].message);
+            });
+        //.addTo(map);      ****** the drawMap() function now adds the data to the map *****
+
+        //console.log(energy);
+
+
+
+        function drawMap(energyData) {
+
+            var electricity = L.geoJson(energyData, {
+                pointToLayer: function (feature, layer) {
+                    return L.circleMarker(layer, {
+                        color: '#D96D02',
+                        opacity: 1,
+                        weight: 2,
+                        fillOpacity: 0,
+                        //radius: calcRadius(Number(feature.properties.electricity))
+                    });
+                }
+            }).addTo(map);
+
+            var p_lamp = L.geoJson(energyData, {
+                pointToLayer: function (feature, layer) {
+                    return L.circleMarker(layer, {
+                        color: '#1cce58',
+                        opacity: 1,
+                        weight: 2,
+                        fillOpacity: 0,
+                        //radius: calcRadius(Number(feature.properties.p_lamp))
+                    });
+                }
+            }).addTo(map);
+
+            var lantern = L.geoJson(energyData, {
+                pointToLayer: function (feature, layer) {
+                    return L.circleMarker(layer, {
+                        color: '#1d198d',
+                        opacity: 1,
+                        weight: 2,
+                        fillOpacity: 0,
+                        //radius: calcRadius(Number(feature.properties.lantern))
+                    });
+                }
+            }).addTo(map);
+
+            var tin_lamp = L.geoJson(energyData, {
+                pointToLayer: function (feature, layer) {
+                    return L.circleMarker(layer, {
+                        color: '#a0408d',
+                        opacity: 1,
+                        weight: 2,
+                        fillOpacity: 0,
+                        //radius: calcRadius(Number(feature.properties.tin_lamp))
+                    });
+                }
+            }).addTo(map);
+
+            var gas_lamp = L.geoJson(energyData, {
+                pointToLayer: function (feature, layer) {
+                    return L.circleMarker(layer, {
+                        color: '#cf4c1f',
+                        opacity: 1,
+                        weight: 2,
+                        fillOpacity: 0,
+                        //radius: calcRadius(Number(feature.properties.gas_lamp))
+                    });
+                }
+            }).addTo(map);
+
+            var wood = L.geoJson(energyData, {
+                pointToLayer: function (feature, layer) {
+                    return L.circleMarker(layer, {
+                        color: '#3b7326',
+                        opacity: 1,
+                        weight: 2,
+                        fillOpacity: 0,
+                        //radius: calcRadius(Number(feature.properties.wood))
+                    });
+                }
+            }).addTo(map);
+
+            var solar = L.geoJson(energyData, {
+                pointToLayer: function (feature, layer) {
+                    return L.circleMarker(layer, {
+                        color: '#e6ab02',
+                        opacity: 1,
+                        weight: 2,
+                        fillOpacity: 0,
+                        //radius: calcRadius(Number(feature.properties.Solar))
+                    });
+                }
+            }).addTo(map);
+
+            var other = L.geoJson(energyData, {
+                pointToLayer: function (feature, layer) {
+                    return L.circleMarker(layer, {
+                        color: '#1a7acc',
+                        opacity: 1,
+                        weight: 2,
+                        fillOpacity: 0,
+                        //radius: calcRadius(Number(feature.properties.other))
+                    });
+                }
+            }).addTo(map);
+
+            updateSymbols(electricity, p_lamp, lantern, tin_lamp, gas_lamp, wood, solar, other);
+
+            //console.log(energyData);
+        }
+
+        function calcRadius(val) {
+            var radius = Math.sqrt(val / Math.PI);
+            return radius * .6;
+        }
+
+        function updateSymbols(electricity, p_lamp, lantern, tin_lamp, gas_lamp, wood, solar, other) {
+
+            electricity.eachLayer(function (layer) {
+                layer.setRadius(calcRadius(Number(layer.feature.properties.electricity)));
+            });
+
+            p_lamp.eachLayer(function (layer) {
+                layer.setRadius(calcRadius(Number(layer.feature.properties.p_lamp)));
+            });
+
+            lantern.eachLayer(function (layer) {
+                layer.setRadius(calcRadius(Number(layer.feature.properties.lantern)));
+            });
+
+            tin_lamp.eachLayer(function (layer) {
+                layer.setRadius(calcRadius(Number(layer.feature.properties.tin_lamp)));
+            });
+
+            gas_lamp.eachLayer(function (layer) {
+                layer.setRadius(calcRadius(Number(layer.feature.properties.gas_lamp)));
+            });
+
+            wood.eachLayer(function (layer) {
+                layer.setRadius(calcRadius(Number(layer.feature.properties.wood)));
+            });
+
+            solar.eachLayer(function (layer) {
+                layer.setRadius(calcRadius(Number(layer.feature.properties.Solar)));
+            });
+
+            other.eachLayer(function (layer) {
+                layer.setRadius(calcRadius(Number(layer.feature.properties.other)));
+            });
+        }
+
+        function sequenceUI() {
+
+            $('.slider')
+                .on('input change', function () {
+                    radiusMultiplier = $(this).val();
+                    updateSymbols();
+                });
+        }
     </script>
 
 </body>
