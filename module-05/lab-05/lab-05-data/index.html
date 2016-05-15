@@ -92,6 +92,7 @@
         .menu-ui a.active:hover {
             background: #3074a4;
         }
+        
     </style>
 
 </head>
@@ -105,7 +106,7 @@
     </div>
     <div id="multiplier">Symbol Size</div>
     <div id="legend">
-        <h3>Energy Sources, 2009</h3>
+        <h3>Fuel Sources, 2009</h3>
         <svg class="legend" width="200" height="200"></svg>
     </div>
 
@@ -131,8 +132,9 @@
             gas_lamp,
             wood,
             solar,
-            other;
-        
+            other,
+            flame_based;
+
         var layers = document.getElementById('menu-ui');
 
         //var counties = omnivore.geojson('population-kenya-counties-2009.geojson').addTo(map);
@@ -148,6 +150,7 @@
         //console.log(energy);
 
         sequenceUI();
+        //infoWindow();
 
 
 
@@ -168,7 +171,7 @@
             p_lamp = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
-                        color: '#1cce58',
+                        //color: '#1cce58',
                         opacity: 1,
                         weight: 2,
                         fillOpacity: 0,
@@ -180,7 +183,7 @@
             lantern = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
-                        color: '#1d198d',
+                        //color: '#1d198d',
                         opacity: 1,
                         weight: 2,
                         fillOpacity: 0,
@@ -192,7 +195,7 @@
             tin_lamp = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
-                        color: '#a0408d',
+                        //color: '#a0408d',
                         opacity: 1,
                         weight: 2,
                         fillOpacity: 0,
@@ -204,7 +207,7 @@
             gas_lamp = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
-                        color: '#cf4c1f',
+                        //color: '#cf4c1f',
                         opacity: 1,
                         weight: 2,
                         fillOpacity: 0,
@@ -216,7 +219,7 @@
             wood = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
-                        color: '#3b7326',
+                        //color: '#3b7326',
                         opacity: 1,
                         weight: 2,
                         fillOpacity: 0,
@@ -249,7 +252,22 @@
                 }
             }).addTo(map);
             
-            var flameEnergy = L.layerGroup([p_lamp, lantern, tin_lamp, gas_lamp, wood]).addTo(map);
+            flame_based = L.geoJson(energyData, {
+                pointToLayer: function (feature, layer) {
+                    return L.circleMarker(layer, {
+                        color: '#3b7326',
+                        opacity: 1,
+                        weight: 2,
+                        fillOpacity: 0,
+                        //radius: calcRadius(Number(feature.properties.other))
+                    });
+                }
+            }).addTo(map);
+            console.log(flame_based);
+
+            
+            var flameEnergy = L.layerGroup([p_lamp, lantern, tin_lamp, gas_lamp, wood]);
+                //.addTo(map);
             var flameLayers = {
                 "Kerosene": p_lamp,
                 "Candles": lantern,
@@ -257,12 +275,13 @@
                 "Gas": gas_lamp,
                 "Wood": wood
             };
-            
+
             addLayer(electricity, 'Electricity', 1);
             addLayer(solar, 'Solar', 2);
-            addLayer(flameEnergy, 'Flame-based', 3);
-            
-            var radioControls = L.control.layers(null, flameLayers ).addTo(map);
+            addLayer(flame_based, 'Flame-based', 3);
+            addLayer(other, 'Other Lighting', 4);
+
+            //var radioControls = L.control.layers(null, flameLayers).addTo(map);
 
 
             updateSymbols();
@@ -324,6 +343,12 @@
 
             other.eachLayer(function (layer) {
                 radius = calcRadius(Number(layer.feature.properties.other));
+                layer.setRadius(radius);
+                allRadii.push(radius);
+            });
+            
+            flame_based.eachLayer(function (layer) {
+                radius = calcRadius(Number(layer.feature.properties.flame_tot));
                 layer.setRadius(radius);
                 allRadii.push(radius);
             });
@@ -397,6 +422,8 @@
 
             layers.appendChild(link);
         }
+
+        
     </script>
 
 </body>
