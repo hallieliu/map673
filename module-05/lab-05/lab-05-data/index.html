@@ -93,6 +93,52 @@
             background: #3074a4;
         }
         
+        #info {
+            position: absolute;
+            max-width: 200px;
+            right: 15px;
+            top: 15px;
+            display: none;
+            background: whitesmoke;
+            border: 2px solid #d3d3d3;
+            padding: 2px 6px;
+        }
+        
+        #info p {
+            margin: 3px 0 4px;
+        }
+        
+         .choro-legend {
+            padding: 6px 8px;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+        
+        .choro-legend h3 {
+            font-size: 1.1em;
+            font-weight: normal;
+            color: #001323;
+            margin: 0 0 10px 0;
+        }
+        
+        .choro-legend span {
+            width: 20px;
+            height: 20px;
+            float: left;
+            margin: 0 10px 4px 0;
+        }
+        
+        .choro-legend label {
+            font-size: 1.1em;
+        }
+        
+        .choro-legend label:after {
+            content: '';
+            display: block;
+            clear: both;
+        }
     </style>
 
 </head>
@@ -109,11 +155,18 @@
         <h3>Fuel Sources, 2009</h3>
         <svg class="legend" width="200" height="200"></svg>
     </div>
+    <div id="info">
+        <p>County: <span></span></p>
+        <p class="households">TotalHouseholds: <span></span></p>
+    </div>
 
 
     <script>
+        // MAPBOX ACCESS TOKEN
         L.mapbox.accessToken = 'pk.eyJ1IjoiaGFsbGllbGl1IiwiYSI6ImNpbnFhMGQwNDAwZWZ3N2tsMjMxa3RxNGkifQ.dJnzRSGnzwTOJduI5IEeJA';
 
+
+        // INSTANTIATE MAP ON PAGE
         var map = L.mapbox.map('map', 'mapbox.light', {
             center: [-.23, 37.8],
             zoom: 6,
@@ -122,8 +175,8 @@
             maxBounds: L.latLngBounds([-6.22, 27.72], [5.76, 47.83])
         });
 
-        var controlLayers = document.getElementById('menu-ui');
 
+        // DECLARE GLOBAL VARIABLES
         var radiusMultiplier = .3,
             electricity,
             p_lamp,
@@ -133,11 +186,38 @@
             wood,
             solar,
             other,
-            flame_based;
+            flame_based,
+            dataLayer;
 
+        // a variable for CONTROL buttons
         var layers = document.getElementById('menu-ui');
+        
+        var attribute = "Households",
+            norm = "Area_sq_km";
 
-        //var counties = omnivore.geojson('population-kenya-counties-2009.geojson').addTo(map);
+
+        // ADD COUNTY POPULATION LAYER AS GEOJSON
+        $.getJSON('population-kenya-counties-2009.geojson', function (data) {
+            
+            var counties = L.geoJson(data, {
+                style: function (feature) {
+                    return {
+                        color: '#dddddd',
+                        weight: 0,
+                        fillOpacity: 1
+                    };
+                }
+            }).addTo(map)
+            .bringToBack();
+            
+            console.log(data);
+            drawCounties(counties);
+            console.log(data);
+            //infoWindow(counties);
+        });
+    
+
+        // ADD ENERGY DATA AS LAYERS TO MAP FROM CSV
         var energy = omnivore.csv('lighting-energy-kenya-counties-2009.csv')
             .on('ready', function (e) {
                 drawMap(e.target.toGeoJSON())
@@ -149,17 +229,24 @@
 
         //console.log(energy);
 
+
+        // ADD FANCY UI THINGS
         sequenceUI();
         //infoWindow();
 
 
 
+        // --------------------------
+        // *** FUNCTIONS ARE HERE ***
+        // --------------------------
+
+        // ADD ENERGY DATA AS SEPARATE LAYERS TO THE MAP
         function drawMap(energyData) {
 
             electricity = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
-                        color: '#D96D02',
+                        color: '#984ea3',
                         opacity: 1,
                         weight: 2,
                         fillOpacity: 0,
@@ -251,11 +338,11 @@
                     });
                 }
             }).addTo(map);
-            
+
             flame_based = L.geoJson(energyData, {
                 pointToLayer: function (feature, layer) {
                     return L.circleMarker(layer, {
-                        color: '#3b7326',
+                        color: '#D96D02',
                         opacity: 1,
                         weight: 2,
                         fillOpacity: 0,
@@ -263,19 +350,21 @@
                     });
                 }
             }).addTo(map);
-            console.log(flame_based);
+            //console.log(flame_based);
 
-            
+
+            // create a layerGroup for all the flame-based layers
             var flameEnergy = L.layerGroup([p_lamp, lantern, tin_lamp, gas_lamp, wood]);
-                //.addTo(map);
-            var flameLayers = {
-                "Kerosene": p_lamp,
-                "Candles": lantern,
-                "Biofuel": tin_lamp,
-                "Gas": gas_lamp,
-                "Wood": wood
-            };
+            //.addTo(map);
+            //var flameLayers = {
+            //    "Kerosene": p_lamp,
+            //    "Candles": lantern,
+            //    "Biofuel": tin_lamp,
+            //    "Gas": gas_lamp,
+            //    "Wood": wood
+            //};
 
+            // determine which layers have control buttons
             addLayer(electricity, 'Electricity', 1);
             addLayer(solar, 'Solar', 2);
             addLayer(flame_based, 'Flame-based', 3);
@@ -289,11 +378,15 @@
             //console.log(energyData);
         }
 
+
+        // DETERMINE SYMBOL RADIUS SIZE
         function calcRadius(val) {
             var radius = Math.sqrt(val / Math.PI);
             return radius * radiusMultiplier;
         }
 
+
+        // LISTEN TO THE SLIDER TO RESIZE SYMBOLS
         function updateSymbols() {
 
             var radius, // variable to hold each radius
@@ -346,7 +439,7 @@
                 layer.setRadius(radius);
                 allRadii.push(radius);
             });
-            
+
             flame_based.eachLayer(function (layer) {
                 radius = calcRadius(Number(layer.feature.properties.flame_tot));
                 layer.setRadius(radius);
@@ -356,6 +449,8 @@
             drawLegend(allRadii);
         }
 
+
+        // CREATE SLIDER 
         function sequenceUI() {
 
             //var output = $('#multiplier span');
@@ -368,6 +463,8 @@
                 });
         }
 
+
+        // CREATE DYNAMIC LEGEND
         function drawLegend(allRadii) {
 
             var legend = $('.legend');
@@ -395,6 +492,8 @@
 
         }
 
+
+        // ADD CONTROL BUTTONS
         function addLayer(layer, name, zIndex) {
             layer
                 .setZIndex(zIndex)
@@ -423,7 +522,116 @@
             layers.appendChild(link);
         }
 
+        // THIS FUNCTION DOESN"T WORK D:
+        function infoWindow(counties) {
+
+            var info = $('#info');
+
+            counties.on('mouseover', function (e) {
+                var props = e.features.properties;
+                info.show();
+                $('#info span').text(props.COUNTY);
+                $(".households span").text('Total Households:' + String(props.Households));
+
+                e.layer.setStyle({
+                    fillOpacity: .6
+                });
+
+            });
+
+            counties.on('mouseout', function (e) {
+                info.hide();
+                e.layer.setStyle({
+                    fillOpacity: 0
+                });
+            });
+        }
         
+        
+        // DRAW COUNTIES AS CHOROPLETH MAP
+        function drawCounties(dataLayer) {
+            var breaks = getClassBreaks(dataLayer);
+            var hoverColor = '#04A777';
+            
+            dataLayer.eachLayer(function (layer) {
+                var properColor = getColor(layer.feature.properties[attribute] / layer.feature.properties[norm], breaks);
+                layer.setStyle({
+                    fillColor: properColor
+                    });
+                layer.on('mouseover', function (){
+                    layer.setStyle({
+                        fillColor: hoverColor,
+                        fillOpacity: .3,
+                        color: hoverColor,
+                        weight: 3
+                    })
+                });
+                layer.on('mouseout', function () {
+                    layer.setStyle({
+                        fillColor: properColor,
+                        fillOpacity: 1,
+                        color: '#dddddd',
+                        weight: 0
+                    })
+                });
+                
+                var rate = (layer.feature.properties[attribute] / layer.feature.properties[norm])*100;
+                rate = rate.toFixed(2);
+                var popDense = parseFloat((layer.feature.properties[attribute] / layer.feature.properties[norm])).toFixed(2);
+                layer.bindPopup('<b>' + layer.feature.properties.COUNTY + ' County </b><br>' + 'Total '+ attribute + ': ' + String(layer.feature.properties[attribute]) + '<br>' + popDense + ' households/sq km');
+            });
+
+            drawChoroLegend(breaks);
+        }
+        
+        function getClassBreaks(dataLayer) {
+            var values = [];
+            dataLayer.eachLayer(function (layer) {
+                var value = layer.feature.properties[attribute] / layer.feature.properties[norm];
+                values.push(value);
+            });
+            // determine similar clusters
+            var clusters = ss.ckmeans(values, 5);
+
+            // create an array of the lowest value within each cluster
+            var breaks = clusters.map(function (cluster) {
+                return [cluster[0], cluster.pop()];
+            });
+
+            return breaks;
+        }
+        
+        function getColor(d, breaks) {
+            if (d <= breaks[0][1]) {
+                return '#edf8e9';
+            } else if (d <= breaks[1][1]) {
+                return '#bae4b3';
+            } else if (d <= breaks[2][1]) {
+                return '#74c476';
+            } else if (d <= breaks[3][1]) {
+                return '#31a354'
+            } else if (d <= breaks[4][1]) {
+                return '#006d2c'
+            }
+        }
+        
+        function drawChoroLegend(breaks) {
+            var choroLegend = L.control({position: 'topleft'});
+            
+            choroLegend.onAdd = function () {
+                var div = L.DomUtil.create('div', 'choro-legend');
+                div.innerHTML = "<h3>" + attribute + " per square km</h3>";
+                for (var i = 0; i < breaks.length; i++) {
+                    var color = getColor(breaks[i][0], breaks);
+                    div.innerHTML +=
+                        '<span style="background:' + color + '"></span> ' +
+                        '<label>' + (breaks[i][0]).toFixed(2) + ' &mdash; ' +
+                        (breaks[i][1]).toFixed(2) + '</label>';
+                } return div;
+            };
+            choroLegend.addTo(map);
+        }
+
     </script>
 
 </body>
