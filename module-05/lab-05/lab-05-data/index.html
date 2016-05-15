@@ -16,50 +16,87 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap2/bootstrap-switch.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.js"></script>
+    <link href='https://fonts.googleapis.com/css?family=Cantarell:400,700' rel='stylesheet' type='text/css'>
 
     <style>
         body {
             margin: 0;
             padding: 0;
+            font-family: "Cantarell", sans-serif;
+        }
+        
+        #side-panel {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 40%;
+            background: #456990;
+            border-right: 2px solid #1C9976;
+            overflow-y: scroll;
         }
         
         #map {
             position: absolute;
             top: 0;
             bottom: 0;
-            width: 100%;
+            left: 0;
+            width: 60%;
         }
         
         #ui-slider {
             position: absolute;
-            top: 20px;
-            left: 60px;
+            top: 40%;
+            right: 5%;
+            background: #06bee1;
+            border-radius: 3px;
+            color: whitesmoke;
+            width: 200px;
+            padding: 8px 15px 4px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .slider {
+            width: 100%;
         }
         
         #multiplier {
             position: absolute;
-            left: 60px;
-            top: 50px;
-            padding: 6px 15px 8px;
+            top: 45%;
+            right: 5%;
+            padding: 3px 15px 4px;
             background: whitesmoke;
-            border: 2px solid #d3d3d3;
+            border-radius: 3px;
         }
         
         #legend {
             position: absolute;
-            right: 0;
-            bottom: 30px;
+            right: 10%;
+            top: 55%;
+            padding: 8px 15px;
+            background: whitesmoke;
+            border: 2px solid #1C9976;
+            border-radius: 3px;
+            color: #1C9976;
+            width: 160px;
+            height: 220px;
+        }
+        
+        #legend h3 {
+            text-align: right;
+            font-weight: 400;
+            margin: 10px 0 20px;
         }
         
         .menu-ui {
-            background: #fff;
+            background: #dddddd;
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 10%;
+            right: 5%;
             z-index: 1;
             border-radius: 3px;
             width: 120px;
-            border: 1px solid rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
         }
         
         .menu-ui a {
@@ -70,7 +107,6 @@
             padding: 0;
             padding: 10px;
             text-decoration: none;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.25);
             text-align: center;
         }
         
@@ -89,7 +125,7 @@
         }
         
         .menu-ui a.active {
-            background: #3887BE;
+            background: #06bee1;
             color: #FFF;
         }
         
@@ -98,21 +134,33 @@
         }
         
         #info {
-            position: absolute;
-            max-width: 200px;
-            right: 150px;
-            top: 150px;
-            display: none;
+            padding: 8px 15px;
             background: whitesmoke;
-            border: 2px solid #d3d3d3;
-            padding: 2px 6px;
+            border: 2px solid #1C9976;
+            border-radius: 3px;
+            color: #1C9976;
+            position: absolute;
+            right: 20%;
+            top: 20%;
+            font-size: 1em;
+            max-width: 250px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
         }
         
         #info p {
             margin: 3px 0 4px;
         }
         
+        #info span:last-child {
+            font-size: 1.3em;
+            font-weight: 500;
+        }
+        
         .choro-legend {
+            position: absolute;
+            width: 180px;
+            left: 10%;
+            top: 20%;
             padding: 6px 8px;
             font-size: 1em;
             background: rgba(255, 255, 255, 0.8);
@@ -154,7 +202,6 @@
             border: 2px solid #d3d3d3;
             padding: 2px 6px;
         }
-        
     </style>
 
 </head>
@@ -162,6 +209,7 @@
 <body>
 
     <nav id='menu-ui' class='menu-ui'></nav>
+    <div id='side-panel'></div>
     <div id='map'></div>
     <div id="ui-slider">
         <input type="range" min=".1" , max="3" , value=".3" , step=".01" class="slider">
@@ -177,7 +225,10 @@
         <p class="density"><span></span> households/sq km</p>
     </div>
     <div id='sparkline'></div>
-    <input type="checkbox" name="my-checkbox" checked>
+    <input id="ChoroToggle" type="checkbox" data-off-text="No" data-on-text="Yes" checked="true" class="BSswitch">
+    <label>Show Population Data?
+        <label id="CheckBoxValue" value="None"></label>
+    </label>
 
 
     <script>
@@ -215,6 +266,10 @@
             norm = "Area_sq_km";
 
 
+        //$("[name='population-choro-data']").bootstrapSwitch();
+        //$('.BSswitch').bootstrapSwitch('state', true);
+
+
         // ADD COUNTY POPULATION CHOROPLETH LAYER AS GEOJSON
         $.getJSON('population-kenya-counties-2009.geojson', function (data) {
 
@@ -222,13 +277,18 @@
                     style: function (feature) {
                         return {
                             color: '#dddddd',
-                            weight: 1,
-                            fillOpacity: 1
+                            weight: 0,
+                            fillOpacity: 0
                         };
                     }
                 }).addTo(map)
                 .bringToBack();
 
+            //$('input[type="checkbox"]').click(function () {
+            //    if ($(this).prop("checked") == true) {
+            //        drawCounties(counties);
+            //    }
+            //});
             drawCounties(counties);
         });
 
@@ -267,7 +327,8 @@
         // ADD FANCY UI THINGS
         sequenceUI();
         //infoWindow();
-        $("[name='my-checkbox']").bootstrapSwitch();
+
+
 
 
 
@@ -518,9 +579,11 @@
 
             for (var circle in circles) {
 
-                svgCircles += '<circle cx="' + 100 + '" cy="' + (circles[circle] - 180) * -1 + '" r="' + circles[circle] + '" stroke="#d3d3d3" stroke-width="1" fill="ghostwhite" />';
+                svgCircles += '<circle cx="' + 80 + '" cy="' + (circles[circle] - 140) * -1 + '" r="' + circles[circle] + '" stroke="#1C9976" stroke-width="1" fill="ghostwhite" />';
 
-                svgCircles += '<text x="' + 80 + '" y = "' + (circles[circle] - 160) * -1 + '" fill= "green">' + reverseCalc(circles[circle]) + '</text>'
+                svgCircles += '<text x="' + 60 + '" y = "' + (circles[circle] - 120) * -1 + '" fill= "#1C9976">' + reverseCalc(circles[circle]) + '</text>'
+
+
             }
 
             legend.html(svgCircles)
@@ -599,26 +662,15 @@
             var hoverColor = '#04A777';
 
             dataLayer.eachLayer(function (layer) {
+
                 var properColor = getColor(layer.feature.properties[attribute] / layer.feature.properties[norm], breaks);
                 layer.setStyle({
-                    fillColor: properColor
-                });
-                layer.on('mouseover', function () {
-                    layer.setStyle({
-                        fillColor: hoverColor,
-                        fillOpacity: .3,
-                        color: hoverColor,
-                        weight: 3
-                    })
-                });
-                layer.on('mouseout', function () {
-                    layer.setStyle({
-                        fillColor: properColor,
-                        fillOpacity: 1,
-                        color: '#dddddd',
-                        weight: 0
-                    })
-                });
+                    fillColor: properColor,
+                    fillOpacity: 1,
+                    color: '#dddddd',
+                    weight: 2
+                })
+
             });
 
             drawChoroLegend(breaks);
