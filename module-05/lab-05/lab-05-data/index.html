@@ -12,6 +12,10 @@
     <script src='https://code.jquery.com/jquery-1.12.0.min.js'></script>
     <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.2.0/leaflet-omnivore.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/simple-statistics/1.0.1/simple_statistics.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sparklines/2.1.2/jquery.sparkline.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap2/bootstrap-switch.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.js"></script>
 
     <style>
         body {
@@ -96,8 +100,8 @@
         #info {
             position: absolute;
             max-width: 200px;
-            right: 15px;
-            top: 15px;
+            right: 150px;
+            top: 150px;
             display: none;
             background: whitesmoke;
             border: 2px solid #d3d3d3;
@@ -108,7 +112,7 @@
             margin: 3px 0 4px;
         }
         
-         .choro-legend {
+        .choro-legend {
             padding: 6px 8px;
             font-size: 1em;
             background: rgba(255, 255, 255, 0.8);
@@ -139,6 +143,18 @@
             display: block;
             clear: both;
         }
+        
+        #sparkline {
+            position: absolute;
+            max-width: 200px;
+            right: 250px;
+            top: 150px;
+            display: none;
+            background: whitesmoke;
+            border: 2px solid #d3d3d3;
+            padding: 2px 6px;
+        }
+        
     </style>
 
 </head>
@@ -157,8 +173,11 @@
     </div>
     <div id="info">
         <p>County: <span></span></p>
-        <p class="households">TotalHouseholds: <span></span></p>
+        <p class="households">Total Households: <span></span></p>
+        <p class="density"><span></span> households/sq km</p>
     </div>
+    <div id='sparkline'></div>
+    <input type="checkbox" name="my-checkbox" checked>
 
 
     <script>
@@ -191,31 +210,46 @@
 
         // a variable for CONTROL buttons
         var layers = document.getElementById('menu-ui');
-        
+        // global variables for choropleth layers
         var attribute = "Households",
             norm = "Area_sq_km";
 
 
-        // ADD COUNTY POPULATION LAYER AS GEOJSON
+        // ADD COUNTY POPULATION CHOROPLETH LAYER AS GEOJSON
         $.getJSON('population-kenya-counties-2009.geojson', function (data) {
-            
+
             var counties = L.geoJson(data, {
+                    style: function (feature) {
+                        return {
+                            color: '#dddddd',
+                            weight: 1,
+                            fillOpacity: 1
+                        };
+                    }
+                }).addTo(map)
+                .bringToBack();
+
+            drawCounties(counties);
+        });
+
+
+        // ADD COUNTY LAYER FOR HOVER PANEL PORPOISES
+        $.getJSON('population-kenya-counties-2009.geojson', function (data) {
+
+            var ghostCounties = L.geoJson(data, {
                 style: function (feature) {
                     return {
                         color: '#dddddd',
                         weight: 0,
-                        fillOpacity: 1
+                        fillOpacity: 0
                     };
                 }
             }).addTo(map)
-            .bringToBack();
-            
-            console.log(data);
-            drawCounties(counties);
-            console.log(data);
-            //infoWindow(counties);
+
+            drawGhostCounties(ghostCounties);
+            infoWindow(ghostCounties);
         });
-    
+
 
         // ADD ENERGY DATA AS LAYERS TO MAP FROM CSV
         var energy = omnivore.csv('lighting-energy-kenya-counties-2009.csv')
@@ -233,6 +267,7 @@
         // ADD FANCY UI THINGS
         sequenceUI();
         //infoWindow();
+        $("[name='my-checkbox']").bootstrapSwitch();
 
 
 
@@ -364,7 +399,7 @@
             //    "Wood": wood
             //};
 
-            // determine which layers have control buttons
+            // give these layers control buttons
             addLayer(electricity, 'Electricity', 1);
             addLayer(solar, 'Solar', 2);
             addLayer(flame_based, 'Flame-based', 3);
@@ -386,7 +421,7 @@
         }
 
 
-        // LISTEN TO THE SLIDER TO RESIZE SYMBOLS
+        // TRACK SYMBOL SIZES
         function updateSymbols() {
 
             var radius, // variable to hold each radius
@@ -493,7 +528,7 @@
         }
 
 
-        // ADD CONTROL BUTTONS
+        // ADD LAYER CONTROL BUTTONS
         function addLayer(layer, name, zIndex) {
             layer
                 .setZIndex(zIndex)
@@ -522,43 +557,53 @@
             layers.appendChild(link);
         }
 
-        // THIS FUNCTION DOESN"T WORK D:
+
+        // COUNTY INFO SUMMARY WINDOW
         function infoWindow(counties) {
 
             var info = $('#info');
 
-            counties.on('mouseover', function (e) {
-                var props = e.features.properties;
-                info.show();
-                $('#info span').text(props.COUNTY);
-                $(".households span").text('Total Households:' + String(props.Households));
+            //console.log(counties);
 
-                e.layer.setStyle({
-                    fillOpacity: .6
+            counties.eachLayer(function (layer) {
+                layer.on('mouseover', function (e) {
+
+                    var props = layer.feature.properties;
+                    var popDense = parseFloat((props.Households / props[norm])).toFixed(2);
+
+                    info.show();
+                    $('#info span').text(props.COUNTY);
+                    $(".households span").text(String(props.Households));
+                    $(".density span").text(popDense);
+
+                    e.layer.setStyle({
+                        fillOpacity: .6
+                    });
+
                 });
 
-            });
+                layer.on('mouseout', function (e) {
+                    info.hide();
 
-            counties.on('mouseout', function (e) {
-                info.hide();
-                e.layer.setStyle({
-                    fillOpacity: 0
+                    e.layer.setStyle({
+                        fillOpacity: 0
+                    });
                 });
-            });
+            })
         }
-        
-        
+
+
         // DRAW COUNTIES AS CHOROPLETH MAP
         function drawCounties(dataLayer) {
             var breaks = getClassBreaks(dataLayer);
             var hoverColor = '#04A777';
-            
+
             dataLayer.eachLayer(function (layer) {
                 var properColor = getColor(layer.feature.properties[attribute] / layer.feature.properties[norm], breaks);
                 layer.setStyle({
                     fillColor: properColor
-                    });
-                layer.on('mouseover', function (){
+                });
+                layer.on('mouseover', function () {
                     layer.setStyle({
                         fillColor: hoverColor,
                         fillOpacity: .3,
@@ -574,16 +619,42 @@
                         weight: 0
                     })
                 });
-                
-                var rate = (layer.feature.properties[attribute] / layer.feature.properties[norm])*100;
-                rate = rate.toFixed(2);
-                var popDense = parseFloat((layer.feature.properties[attribute] / layer.feature.properties[norm])).toFixed(2);
-                layer.bindPopup('<b>' + layer.feature.properties.COUNTY + ' County </b><br>' + 'Total '+ attribute + ': ' + String(layer.feature.properties[attribute]) + '<br>' + popDense + ' households/sq km');
             });
 
             drawChoroLegend(breaks);
         }
-        
+
+
+        // DRAW COUNTIES FOR COUNTY INFO PANEL
+        function drawGhostCounties(dataLayer) {
+
+            var hoverColor = '#04A777';
+
+            dataLayer.eachLayer(function (layer) {
+                layer.on('mouseover', function () {
+                    layer.setStyle({
+                        fillColor: hoverColor,
+                        fillOpacity: .3,
+                        color: hoverColor,
+                        weight: 2
+                    })
+                });
+                layer.on('mouseout', function () {
+                    layer.setStyle({
+                        fillOpacity: 0,
+                        weight: 0
+                    })
+                });
+
+                var rate = (layer.feature.properties[attribute] / layer.feature.properties[norm]) * 100;
+                rate = rate.toFixed(2);
+                var popDense = parseFloat((layer.feature.properties[attribute] / layer.feature.properties[norm])).toFixed(2);
+                layer.bindPopup('<b>' + layer.feature.properties.COUNTY + ' County </b><br>' + 'Total ' + attribute + ': ' + String(layer.feature.properties[attribute]) + '<br>' + popDense + ' households/sq km');
+            });
+        }
+
+
+        // BINS FOR CHOROPLETH
         function getClassBreaks(dataLayer) {
             var values = [];
             dataLayer.eachLayer(function (layer) {
@@ -600,7 +671,9 @@
 
             return breaks;
         }
-        
+
+
+        // COLORS FOR CHOROPLETH
         function getColor(d, breaks) {
             if (d <= breaks[0][1]) {
                 return '#edf8e9';
@@ -614,10 +687,14 @@
                 return '#006d2c'
             }
         }
-        
+
+
+        // LEGEND FOR CHOROPLETH
         function drawChoroLegend(breaks) {
-            var choroLegend = L.control({position: 'topleft'});
-            
+            var choroLegend = L.control({
+                position: 'topleft'
+            });
+
             choroLegend.onAdd = function () {
                 var div = L.DomUtil.create('div', 'choro-legend');
                 div.innerHTML = "<h3>" + attribute + " per square km</h3>";
@@ -627,11 +704,11 @@
                         '<span style="background:' + color + '"></span> ' +
                         '<label>' + (breaks[i][0]).toFixed(2) + ' &mdash; ' +
                         (breaks[i][1]).toFixed(2) + '</label>';
-                } return div;
+                }
+                return div;
             };
             choroLegend.addTo(map);
         }
-
     </script>
 
 </body>
