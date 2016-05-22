@@ -18,47 +18,44 @@
             background-color: ghostwhite;
         }
         
+        body > div.cartodb-header {
+            display: none;
+            position: absolute;
+            top: 5%;
+            width: 30%;
+            background-color: rgba(0, 0, 0, .5);
+            font-family: 'Helvetica Neue', Helvetica, sans-serif;
+            text-align: center;
+            margin-left: 35%;
+            z-index: 99999;
+        }
     </style>
 </head>
 
 <body>
 
     <div id="map"></div>
-    
+    <div class='cartodb-legend custom'>
+        <ul>
+            <li>
+                <div class="bullet" style="background:#6B0FB2"></div>
+                Library location
+            </li>
+        </ul>
+    </div>
+
     <script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
+
     <script type="cartocss/html" id="locations-styles">
-    #pls_2013_locations{
-        marker-fill-opacity: 0.3;
-        marker-line-color: #3B007F;
-        marker-line-width: 1;
-        marker-line-opacity: 0.2;
-        marker-placement: point;
-        marker-type: ellipse;
-        marker-width: 3.5;
-        marker-fill: #A53ED5;
-        marker-allow-overlap: true;
-        marker-comp-op: darken;
-    }
+        #pls_2013_locations{ marker-fill-opacity: 0.3; marker-line-color: #3B007F; marker-line-width: 1; marker-line-opacity: 0.2; marker-placement: point; marker-type: ellipse; marker-width: 3.5; marker-fill: #A53ED5; marker-allow-overlap: true; marker-comp-op: darken; }
     </script>
     <script type="cartocss/html" id="states-styles">
-    #ne_50m_admin_1_states{
-        polygon-fill: #FF6600;
-        polygon-opacity: 0;
-        line-color: #FFF;
-        line-width: 1;
-        line-opacity: .6;
-    }
+        #ne_50m_admin_1_states{ polygon-fill: #FF6600; polygon-opacity: 0; line-color: #FFF; line-width: 1; line-opacity: .6; }
     </script>
     <script type="cartocss/html" id="land-style">
-    #ne_50m_land{
-        polygon-fill: #dddddd;
-        polygon-opacity: 1;
-        line-color: #FFF;
-        line-width: 1.5;
-        line-opacity: 1;
-    }
+        #ne_50m_land{ polygon-fill: #dddddd; polygon-opacity: 1; line-color: #FFF; line-width: 1.5; line-opacity: 1; }
     </script>
-    
+
     <script>
         var map = new L.Map("map", {
             center: [0, 0], // note the map is centered closer to 0,0
@@ -69,27 +66,53 @@
             user_name: 'hallieliu',
             type: 'cartodb',
             sublayers: [
-                
+
                 // landmass
-                 {  sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM ne_50m_land",
+                {
+                    sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM ne_50m_land",
                     cartocss: $("#land-style").text()
                 },
-                
+
                 // state borders
-                 {  sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM ne_50m_admin_1_states",
+                {
+                    sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM ne_50m_admin_1_states",
                     cartocss: $("#states-styles").text()
                 },
-                
+
                 // library locations
-                {   sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM pls_2013_locations",
+                {
+                    sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM pls_2013_locations",
                     cartocss: $("#locations-styles").text()
                 }
             ]
         }
 
-        cartodb.createLayer(map, sourceObject).addTo(map);
+        cartodb.createLayer(map, sourceObject, {
+                title: true
+            }).addTo(map)
+            .on('done', function (layer) {
+                var i = new cdb.geo.ui.Header({
+
+                    model: new cdb.core.Model({
+                        extra: {
+                            title: "US Public Libraries, 2013",
+                            description: "data: imls.gov | projection: ESRI 102008",
+                            show_title: true,
+                            show_description: true
+                        }
+                    }),
+                    template: cdb.core.Template.compile(
+                        ' \
+ <div class="content">\
+ <div class="title">{{{ title }}}</div>\
+ <div class="description">{{{ description }}}</div>\
+ </div>',
+                        'mustache'
+                    )
+                });
+                $('body').append(i.render().el);
+            });
         //console.log(map);
-        
     </script>
 </body>
 
