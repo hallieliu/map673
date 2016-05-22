@@ -1,27 +1,63 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>673 Module 06 CartoDB Starter Template</title>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 
     <link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v3/3.15/themes/css/cartodb.css" />
-    
+
     <style>
-      html, body, #map {
-        height: 100%;
-        padding: 0;
-        margin: 0;
-      }
+        html,
+        body,
+        #map {
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
     </style>
 </head>
+
 <body>
-    
+
     <div id="map"></div>
 
     <script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
     <script>
+        var url = 'https://hallieliu.cartodb.com/api/v2/viz/0fd0ab14-9601-11e5-94c1-0e31c9be1b51/viz.json';
+        cartodb.createVis('map', url, {
+            shareable: false, // removes the share link upper right of map
+            title: false, // adds better title banner across the top,
+            description: false,
+            search: false, // doesn't work well when map has been projected
+            zoom: 4, // sets initial zoom level
+            cartodb_logo: true,
+            layer_selector: false,
+            fullscreen: false
+        }).done(function (vis, layers) {
 
+            console.log(vis, layers);
+            console.log(vis.getLayers()); /// same as layers here
+            console.log(vis.getOverlays()); /// same as layers here
+
+            var sublayer = layers[1]; // reference to the layers
+
+            console.log(layers[1].getSubLayerCount()) // the number of layers
+
+            sublayer.setInteraction(true); // set the interaction true on the layers
+
+            // retrieve specific information from various features of the layers
+            sublayer.on('featureOver', function (e, latlng, pos, data) {
+                console.log(e, latlng, pos, data);
+            });
+
+            sublayer.setOpacity(.5); // change the opacity of the layers
+
+            sublayer.getSubLayer(2).hide(); // select a specific sublayer of the
+            // layers and hide it
+        });
     </script>
 </body>
+
 </html>
