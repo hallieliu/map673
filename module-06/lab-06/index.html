@@ -17,13 +17,14 @@
             margin: 0;
             background-color: ghostwhite;
         }
+        
     </style>
 </head>
 
 <body>
 
     <div id="map"></div>
-
+    
     <script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
     <script type="cartocss/html" id="locations-styles">
     #pls_2013_locations{
@@ -70,29 +71,25 @@
             sublayers: [
                 
                 // landmass
-                 {sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM ne_50m_land",
-
+                 {  sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM ne_50m_land",
                     cartocss: $("#land-style").text()
                 },
                 
                 // state borders
-                 {sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM ne_50m_admin_1_states",
-
+                 {  sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM ne_50m_admin_1_states",
                     cartocss: $("#states-styles").text()
                 },
                 
                 // library locations
-                {sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM pls_2013_locations",
-
+                {   sql: "SELECT ST_Transform(the_geom, 102008) AS the_geom_webmercator FROM pls_2013_locations",
                     cartocss: $("#locations-styles").text()
                 }
             ]
         }
 
-        //var url = 'https://hallieliu.cartodb.com/api/v2/viz/18a71106-2049-11e6-809b-0e674067d321/viz.json';
-
         cartodb.createLayer(map, sourceObject).addTo(map);
         //console.log(map);
+        
     </script>
 </body>
 
