@@ -106,7 +106,7 @@
         function makeMap(error, cancer, na) {
 
             var breaks = ss.jenks(cancer.features.map(function (d) {
-                return d.properties.uninsured;
+                return d.properties.death_rate;
             }), 5);
 
             breaks.shift(); // remove min value from breaks Array before applying to domain
