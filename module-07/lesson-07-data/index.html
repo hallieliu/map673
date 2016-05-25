@@ -103,9 +103,9 @@
 
 
 
-        function makeMap(error, counties, na) {
+        function makeMap(error, cancer, na) {
 
-            var breaks = ss.jenks(counties.features.map(function (d) {
+            var breaks = ss.jenks(cancer.features.map(function (d) {
                 return d.properties.uninsured;
             }), 5);
 
@@ -130,13 +130,13 @@
 
             svg.append("g")
                 .selectAll("path")
-                .data(counties.features)
+                .data(cancer.features)
                 .enter()
                 .append("path")
                 .attr("d", geoPath)
                 .attr("class", "county")
                 .attr("fill", function (d) {
-                    return jenks(d.properties.uninsured);
+                    return jenks(d.properties.death_rate);
                 });
 
 
