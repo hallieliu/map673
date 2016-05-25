@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LAB 07 - A D3 Choropleth to accompany Lab 06's Public Library location map</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+    <link href='https://fonts.googleapis.com/css?family=Oxygen:400,700' rel='stylesheet' type='text/css'>
+
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+            background: whitesmoke;
+            font-family: Oxygen, sans-serif;
+        }
+        
+        h1,
+        h2 {
+            position: absolute;
+            left: 20px;
+            top: 10px;
+            font-size: 2em;
+            font-weight: 100;
+            color: #005DAA;
+        }
+        
+        h2 {
+            top: 60px;
+            font-size: 1.2em;
+        }
+        
+        #map {
+            width: 900px;
+            height: 600px;
+            margin: 10px auto;
+            border: 1px solid #d3d3d3;
+        }
+        
+        .land {
+            fill: #d3d3d3;
+        }
+        
+        .county {
+            stroke: #fff;
+            fill: #005DAA;
+        }
+        
+        .hover {
+            fill: yellow;
+        }
+        
+    </style>
+</head>
+
+<body>
+
+    <h1>Librarians per capita</h1>
+    <h2></h2>
+    <div id="map"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-statistics/0.9.0/simple_statistics.min.js"></script>
+    <script>
+        
+        // SETUP SVG
+        
+        var width = 900,
+            height = 600;
+
+        var svg = d3.select("#map") // select the document's body
+            .append("svg") // create and append a new svg element to it
+            .attr("width", width) // give the svg width
+            .attr("height", height); // give the svg height
+
+        // SETUP PROJECTION
+        var projection = d3.geo.albers() // create a new d3 projection function, albers equal area
+            .scale(1050) // play with the scale until it's 'zoomed' about right
+            .translate([width / 2, height / 2]); // center the svg (0,0 is top, left)
+
+        // SETUP PATH
+        var geoPath = d3.geo.path() //  create a new geo path generator
+            .projection(projection); // assign the project we just created to it
+
+        // LOAD DATA as layers, top to bottom
+        queue()
+            .defer(d3.json, "us-counties.json")
+            .defer(d3.json, "na_land_clipped.json")
+            //.defer(d3.csv, "PLS_2013_admin_CLEANED.csv")
+            .await(makeMap);
+        
+        
+        
+        function makeMap(error, counties, na) {
+            
+            // JOIN CSV library data to JSON counties
+            
+
+            svg.append("g")
+                .selectAll("path")
+                .data(na.features)
+                .enter()
+                .append("path")
+                .attr("d", geoPath)
+                .attr("class", "land");
+
+            svg.append("g")
+                .selectAll("path")
+                .data(counties.features)
+                .enter()
+                .append("path")
+                .attr("d", geoPath)
+                .attr("class", "county")
+//                .attr("fill", function (d) {
+//                    return jenks(d.properties.uninsured);
+//                });
+            
+            
+            
+            
+            
+            
+            //            var breaks = ss.jenks(counties.features.map(function (d) {
+//                return d.properties.uninsured;
+//            }), 5);
+//
+//            breaks.shift(); // remove min value from breaks Array before applying to domain
+//            breaks.pop(); // same for max
+//
+//            console.log(breaks);
+//
+//            var colors = ["#feedde", "#fdbe85", "#fd8d3c", "#e6550d", "#a63603"];
+//
+//            var jenks = d3.scale.threshold()
+//                .domain(breaks)
+//                .range(colors);
+
+
+
+        }
+    </script>
+</body>
+
+</html>
