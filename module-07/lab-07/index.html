@@ -43,14 +43,12 @@
         }
         
         .county {
-            stroke: #fff;
-            fill: #005DAA;
+            stroke: #fff;    
         }
-        
+    
         .hover {
             fill: yellow;
         }
-        
     </style>
 </head>
 
@@ -66,7 +64,6 @@
     <script>
         
         // SETUP SVG
-        
         var width = 900,
             height = 600;
 
@@ -86,18 +83,63 @@
 
         // LOAD DATA as layers, top to bottom
         queue()
-            .defer(d3.json, "us-counties.json")
+            .defer(d3.json, "https://hallieliu.cartodb.com/api/v2/sql?format=GeoJSON&q=SELECT * FROM librarians_geojson")
+            //.defer(d3.json, "us-counties-librarians.json")
             .defer(d3.json, "na_land_clipped.json")
-            //.defer(d3.csv, "PLS_2013_admin_CLEANED.csv")
+            //.defer(d3.csv, "PLS_2013_county-populations.csv")  *** pass countyPops to makeMap ***
             .await(makeMap);
-        
-        
-        
-        function makeMap(error, counties, na) {
-            
-            // JOIN CSV library data to JSON counties
-            
 
+        // STUFF FOR CHOROPLETH?
+
+
+        // DECLARE FUNCTION makeMap
+        function makeMap(error, counties, na ) {
+            if (error) throw error;
+            
+            var breaky = [];
+            
+            // setup JENKS Choropleth stuff
+            var jenky = counties.features.map(function (d) {
+
+                var a = d.properties.libraria;
+                var b = Number(d.properties.co_pop);
+                
+                if (a >0 && b >0){
+                
+                var c = (a / b) * 10000;
+                console.log(c.toFixed(2));
+                
+                    if (c) {
+                        breaky.push(Number(c.toFixed(2)));
+                        return (Number(c.toFixed(2)));
+                    }
+                }
+                
+                else { 
+                    console.log('oops');
+                    breaky.push(0);
+                    return (0);
+                }
+                
+            });
+            
+            var breaks = ss.jenks(jenky, 5);
+            
+//            console.log(breaks);
+//            console.log(breaky);
+
+            breaks.shift(); // remove min value from breaks Array before applying to domain
+            breaks.pop(); // same for max
+            
+            console.log(breaks);
+            
+            var colors = ["#feedde", "#fdbe85", "#fd8d3c", "#e6550d", "#a63603"];
+
+            var jenks = d3.scale.threshold()
+                .domain(breaks)
+                .range(colors);
+
+            // draw features to map
             svg.append("g")
                 .selectAll("path")
                 .data(na.features)
@@ -113,33 +155,22 @@
                 .append("path")
                 .attr("d", geoPath)
                 .attr("class", "county")
-//                .attr("fill", function (d) {
-//                    return jenks(d.properties.uninsured);
-//                });
-            
-            
-            
-            
-            
-            
-            //            var breaks = ss.jenks(counties.features.map(function (d) {
-//                return d.properties.uninsured;
-//            }), 5);
-//
-//            breaks.shift(); // remove min value from breaks Array before applying to domain
-//            breaks.pop(); // same for max
-//
-//            console.log(breaks);
-//
-//            var colors = ["#feedde", "#fdbe85", "#fd8d3c", "#e6550d", "#a63603"];
-//
-//            var jenks = d3.scale.threshold()
-//                .domain(breaks)
-//                .range(colors);
-
+                .attr("fill", function (d) {
+                    //return "blue";
+                    return jenks(breaky);
+                })
+                .on("mouseover", function(d){
+                    d3.select("h2").text(d.properties.name + ' county');
+                    d3.select(this).attr("class","county hover");
+                })
+                .on("mouseout", function(d){
+                    d3.select("h2").text("");
+                    d3.select(this).attr("class", "county");
+                });
 
 
         }
+        
     </script>
 </body>
 
