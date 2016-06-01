@@ -17,7 +17,8 @@
         }
         
         h1,
-        h2 {
+        h2,
+        h3 {
             position: absolute;
             left: 20px;
             top: 10px;
@@ -29,6 +30,11 @@
         h2 {
             top: 60px;
             font-size: 1.2em;
+        }
+        
+        h3 {
+            top: 80px;
+            font-size: 1.0em;
         }
         
         #map {
@@ -56,6 +62,7 @@
 
     <h1>Librarians per capita</h1>
     <h2></h2>
+    <h3></h3>
     <div id="map"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
@@ -83,17 +90,18 @@
 
         // LOAD DATA as layers, top to bottom
         queue()
-            .defer(d3.json, "https://hallieliu.cartodb.com/api/v2/sql?format=GeoJSON&q=SELECT * FROM librarians_geojson")
-            //.defer(d3.json, "us-counties-librarians.json")
+            //.defer(d3.json, "https://hallieliu.cartodb.com/api/v2/sql?format=GeoJSON&q=SELECT * FROM librarians_geojson")
+            //.defer(d3.json, "us-counties-librarians-updated.geojson")
+            .defer(d3.json, "us-counties-librarians.json")
             .defer(d3.json, "na_land_clipped.json")
-            //.defer(d3.csv, "PLS_2013_county-populations.csv")  *** pass countyPops to makeMap ***
+            .defer(d3.csv, "fips_pops.csv")
             .await(makeMap);
 
         // STUFF FOR CHOROPLETH?
 
 
         // DECLARE FUNCTION makeMap
-        function makeMap(error, counties, na ) {
+        function makeMap(error, counties, na, pops ) {
             if (error) throw error;
             
             var breaky = [];
@@ -101,13 +109,13 @@
             // setup JENKS Choropleth stuff
             var jenky = counties.features.map(function (d) {
 
-                var a = d.properties.libraria;
-                var b = Number(d.properties.co_pop);
+                var a = d.properties.LIBRARIA;
+                var b = Number(d.properties.CO_POP);
                 
                 if (a >0 && b >0){
                 
                 var c = (a / b) * 10000;
-                console.log(c.toFixed(2));
+                //console.log(c.toFixed(2));
                 
                     if (c) {
                         breaky.push(Number(c.toFixed(2)));
@@ -116,9 +124,18 @@
                 }
                 
                 else { 
-                    console.log('oops');
-                    breaky.push(0);
-                    return (0);
+                    //console.log('oops');
+                    
+                    if (a) {
+                        breaky.push(a);
+                        console.log(d.properties.NAME);
+                        console.log(d.properties.GEOID);
+                        return (a);
+                        
+                    } else {
+                        breaky.push(null);
+                        return (null);
+                    }
                 }
                 
             });
@@ -138,6 +155,15 @@
             var jenks = d3.scale.threshold()
                 .domain(breaks)
                 .range(colors);
+            
+            //console.log(Number(pops[0].Pop_est));
+            var popList = [];
+            var k = pops.map(function(d,i){
+            
+                var a = Number(d.Pop_est);
+                console.log(a);
+                popList.push(a);
+            });
 
             // draw features to map
             svg.append("g")
@@ -155,16 +181,45 @@
                 .append("path")
                 .attr("d", geoPath)
                 .attr("class", "county")
-                .attr("fill", function (d) {
+                .attr("fill", function (d, i) {
                     //return "blue";
-                    return jenks(breaky);
+                
+                    var a = d.properties.LIBRARIA;
+                    var b = Number(d.properties.CO_POP);
+                    var c = (a/b) * 100000;
+                         //console.log(c);
+                    if (c < 0){
+                        //console.log(d.properties.NAME + ' ' + d.properties.GEOID);
+                        return '#d3d3d3';
+                    } else if (c) {
+                         return jenks(c);
+                    } else {
+
+                        var h = d.properties.LIBRARIA;
+                        
+                        //NEED TO ACCESS THE CSV FIPS COLUMN TO GET POPULATION 
+                        
+                        // (this one not working, bad logic)
+                        //var m = (h/ popList[i]) * 100000;
+
+                        //console.log(m);
+                        return jenks(m);
+                    }
+
                 })
-                .on("mouseover", function(d){
-                    d3.select("h2").text(d.properties.name + ' county');
+    
+                .on("mouseover", function(d, i){
+                    d3.select("h2").text(d.properties.NAME + ' County');
+                    d3.select(this).attr("class","county hover");
+                
+                    d3.select("h3").text(breaky[i] + ' Librarians per 10,000');
                     d3.select(this).attr("class","county hover");
                 })
                 .on("mouseout", function(d){
                     d3.select("h2").text("");
+                    d3.select(this).attr("class", "county");
+                
+                    d3.select("h3").text("");
                     d3.select(this).attr("class", "county");
                 });
 
